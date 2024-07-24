@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Globalization;
 using MickeyUtilityWeb.Models;
 using Microsoft.Extensions.Logging;
+using System.Text.Json.Serialization;
 
 namespace MickeyUtilityWeb.Services
 {
@@ -31,7 +32,7 @@ namespace MickeyUtilityWeb.Services
                 var tokenResult = await _tokenProvider.RequestAccessToken(
                     new AccessTokenRequestOptions
                     {
-                        Scopes = new[] { "https://graph.microsoft.com/Files.Read.All" }
+                        Scopes = new[] { "https://graph.microsoft.com/Files.ReadWrite.All" }
                     });
 
                 if (tokenResult.TryGetToken(out var token))
@@ -119,6 +120,95 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
+        public async Task UpdateItineraryInOneDrive(List<ItineraryItem> itinerary)
+        {
+            try
+            {
+                var accessToken = await GetAccessTokenAsync();
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+                // First, get the current range to ensure we're updating the correct number of rows and columns
+                var rangeResponse = await _httpClient.GetAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/usedRange");
+                rangeResponse.EnsureSuccessStatusCode();
+                var rangeContent = await rangeResponse.Content.ReadFromJsonAsync<GraphRangeResponse>();
+
+                if (rangeContent?.Values == null || rangeContent.Values.Length == 0)
+                {
+                    throw new InvalidOperationException("No data found in the worksheet.");
+                }
+
+                // Ensure we're updating the correct number of rows
+                int rowsToUpdate = Math.Min(itinerary.Count + 1, rangeContent.Values.Length); // +1 for header row
+
+                var updateRange = new
+                {
+                    values = new object[rowsToUpdate][]
+                };
+
+                // Add header row
+                updateRange.values[0] = new object[] { "IsChecked", "Day", "Date", "Time", "Activity", "Icon", "Location" };
+
+                // Add data rows
+                for (int i = 1; i < rowsToUpdate; i++)
+                {
+                    var item = itinerary[i - 1];
+                    updateRange.values[i] = new object[]
+                    {
+                item.IsChecked,
+                item.Day,
+                item.Date.ToString("yyyy-MM-dd"),
+                item.TimeString,
+                item.Activity,
+                item.Icon,
+                item.Location
+                    };
+                }
+
+                var json = JsonSerializer.Serialize(updateRange, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+                _logger.LogInformation($"Sending update request with data: {json}");
+
+                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PatchAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/usedRange", content);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _logger.LogWarning("Unauthorized access. Attempting to refresh token.");
+                    accessToken = await GetAccessTokenAsync();
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                    response = await _httpClient.PatchAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/usedRange", content);
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"Error response from API: {responseContent}");
+                    throw new HttpRequestException($"Error updating OneDrive: {responseContent}");
+                }
+
+                _logger.LogInformation("Successfully updated itinerary in OneDrive");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating itinerary in OneDrive");
+                throw;
+            }
+        }
+        private class DateTimeConverter : JsonConverter<DateTime>
+        {
+            public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                return DateTime.Parse(reader.GetString());
+            }
+
+            public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString("yyyy-MM-dd"));
+            }
+        }
         private bool ParseBoolean(JsonElement element)
         {
             if (element.ValueKind == JsonValueKind.True || element.ValueKind == JsonValueKind.False)

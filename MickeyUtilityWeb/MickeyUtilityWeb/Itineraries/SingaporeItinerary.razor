@@ -2,19 +2,22 @@
 @using MickeyUtilityWeb.Models
 @using MickeyUtilityWeb.Services
 @inject SGItineraryService ItineraryService
+@inject NavigationManager NavigationManager
 
 <h3>Singapore Itinerary</h3>
 
-@if (errorMessage != null)
-{
-    <div class="alert alert-danger">@errorMessage</div>
-}
-
-@if (itineraryItems == null)
+@if (isLoading)
 {
     <p>Loading...</p>
 }
-else if (itineraryItems.Count == 0)
+else if (errorMessage != null)
+{
+    <div class="alert alert-danger">
+        @errorMessage
+        <button class="btn btn-primary" @onclick="TryAgain">Try Again</button>
+    </div>
+}
+else if (itineraryItems == null || !itineraryItems.Any())
 {
     <p>No itinerary items found.</p>
 }
@@ -35,26 +38,33 @@ else
             @foreach (var item in itineraryItems)
             {
                 <tr>
-                    <td>@item.Day</td>
-                    <td>@item.Date.ToString("yyyy-MM-dd")</td>
-                    <td>@item.Time.ToString()</td>
-                    <td>@item.Activity</td>
-                    <td>@item.Location</td>
-                    <td>
-                        <input type="checkbox" checked="@item.IsChecked" disabled />
-                    </td>
+                    <td><input @bind="item.Day" /></td>
+                    <td><input type="date" @bind="item.Date" @bind:format="yyyy-MM-dd" /></td>
+                    <td><input @bind="item.TimeString" /></td>
+                    <td><input @bind="item.Activity" /></td>
+                    <td><input @bind="item.Location" /></td>
+                    <td><input type="checkbox" @bind="item.IsChecked" /></td>
                 </tr>
             }
         </tbody>
     </table>
+    <button @onclick="SaveChanges" class="btn btn-primary">Save Changes</button>
 }
 
 @code {
     private List<ItineraryItem> itineraryItems;
+    private bool isLoading = true;
     private string errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadItinerary();
+    }
+
+    private async Task LoadItinerary()
+    {
+        isLoading = true;
+        errorMessage = null;
         try
         {
             itineraryItems = await ItineraryService.GetItineraryFromOneDrive();
@@ -62,8 +72,27 @@ else
         catch (Exception ex)
         {
             errorMessage = $"Error loading itinerary: {ex.Message}";
-            Console.WriteLine(errorMessage);
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SaveChanges()
+    {
+        try
+        {
+            await ItineraryService.UpdateItineraryInOneDrive(itineraryItems);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving changes: {ex.Message}";
+        }
+    }
+
+    private void TryAgain()
+    {
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
     }
 }

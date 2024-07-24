@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "MickeyUtilityWeb",
   "resources": {
-    "hash": "sha256-QxTjsEM9mcjzfecpJYjJphR6G4PP1BKZ0EIlrmkGfkw=",
+    "hash": "sha256-vPdglM/dMmgKDhEk+jnTJUr4RsjBbnsJ5S5cevsaqlU=",
     "jsModuleNative": {
       "dotnet.native.8.0.7.pvkr2na9g4.js": "sha256-tFsxPBbhkdn6GKNBKvCRLzrfAHdyM86odYTe0MtrwMk="
     },
@@ -17,7 +17,7 @@
       "icudt_no_CJK.dat": "sha256-L7sV7NEYP37/Qr2FPCePo5cJqRgTXRwGHuwF5Q+0Nfs="
     },
     "assembly": {
-      "MickeyUtilityWeb.wasm": "sha256-1+8WFARC8Vj4kHD1Ht+RsM3Jy6UBHk9UN6FG6MYTOVg=",
+      "MickeyUtilityWeb.wasm": "sha256-1vpnoXQzj797ruNcN18KxMYPGqm4v4Pza9KXJR97REg=",
       "Microsoft.AspNetCore.Authorization.wasm": "sha256-TXs+MpElGDjgqiBeIxMXMYMCVm0P64rDfQcU000/x18=",
       "Microsoft.AspNetCore.Components.Authorization.wasm": "sha256-/UU6Wp32ZRUs8zib8ISTCTgf4wa+rx3A5gtYdt02Q3w=",
       "Microsoft.AspNetCore.Components.wasm": "sha256-P1BAvWwWrJajBtvW6aVxFmvV0Yx/FZlGGG8ZOSbuXX0=",

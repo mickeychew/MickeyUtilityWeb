@@ -1,0 +1,69 @@
+﻿@page "/sgitinerary"
+@using MickeyUtilityWeb.Models
+@using MickeyUtilityWeb.Services
+@inject SGItineraryService ItineraryService
+
+<h3>Singapore Itinerary</h3>
+
+@if (errorMessage != null)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (itineraryItems == null)
+{
+    <p>Loading...</p>
+}
+else if (itineraryItems.Count == 0)
+{
+    <p>No itinerary items found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Day</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Activity</th>
+                <th>Location</th>
+                <th>Completed</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in itineraryItems)
+            {
+                <tr>
+                    <td>@item.Day</td>
+                    <td>@item.Date.ToString("yyyy-MM-dd")</td>
+                    <td>@item.Time.ToString()</td>
+                    <td>@item.Activity</td>
+                    <td>@item.Location</td>
+                    <td>
+                        <input type="checkbox" checked="@item.IsChecked" disabled />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ItineraryItem> itineraryItems;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            itineraryItems = await ItineraryService.GetItineraryFromOneDrive();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading itinerary: {ex.Message}";
+            Console.WriteLine(errorMessage);
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        }
+    }
+}

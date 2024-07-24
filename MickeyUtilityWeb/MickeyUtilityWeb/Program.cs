@@ -14,20 +14,11 @@ builder.Services.AddMsalAuthentication(options =>
 {
     builder.Configuration.Bind("AzureAd", options.ProviderOptions.Authentication);
     options.ProviderOptions.DefaultAccessTokenScopes.Add("https://graph.microsoft.com/Files.Read.All");
+
+    // Set the redirect URI dynamically based on the environment
+    options.ProviderOptions.Authentication.RedirectUri = $"{builder.HostEnvironment.BaseAddress}authentication/login-callback";
 });
 
 builder.Services.AddScoped<SGItineraryService>();
-
-builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
-
-// Configure base path for GitHub Pages
-if (builder.HostEnvironment.BaseAddress.Contains("github.io"))
-{
-    builder.Services.AddScoped(sp =>
-        new HttpClient
-        {
-            BaseAddress = new Uri(builder.HostEnvironment.BaseAddress + "MickeyUtilityWeb/")
-        });
-}
 
 await builder.Build().RunAsync();

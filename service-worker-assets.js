@@ -73,7 +73,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-XlaKEbl5IHl4oBkodeINU\/1LlanVzLVz1xkH\/iWPabI=",
+      "hash": "sha256-\/e6VJzUV2k\/jhfgkK1G6VO3wGM6okvdHLxgmEnd2Tdc=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -89,7 +89,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-EfH2nK8RI8ZcRwwgTZmceOfyOzGnYuVCdVnpNUHqovE=",
+      "hash": "sha256-oFMTde57Pu3pvU8R4SFXyvfse2BhEtRV+qsKFPCWaAo=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -97,11 +97,11 @@
       "url": "_framework\/Microsoft.AspNetCore.Authorization.wasm"
     },
     {
-      "hash": "sha256-\/UU6Wp32ZRUs8zib8ISTCTgf4wa+rx3A5gtYdt02Q3w=",
+      "hash": "sha256-WToepQ0BtcGyJwxXuw0dGKHWiWSqLMBE2X+Xy8whUb0=",
       "url": "_framework\/Microsoft.AspNetCore.Components.Authorization.wasm"
     },
     {
-      "hash": "sha256-+k41k+szeIR15\/XgsBDYIVD2slxLsg2gU\/WRg9YPZzY=",
+      "hash": "sha256-YakupllwiPtD2R4Ewajhg7AMiXHovenBsf4qRjBZAFs=",
       "url": "_framework\/Microsoft.AspNetCore.Components.wasm"
     },
     {
@@ -109,7 +109,7 @@
       "url": "_framework\/Microsoft.AspNetCore.Components.Web.wasm"
     },
     {
-      "hash": "sha256-NA2jYVwdz3KE279muzz58aaOntItyF1HeEsFdqb3ubQ=",
+      "hash": "sha256-iu6j+XQVnFwiYOR6+1xSkoY5UetgFcAhKydi1wlczbM=",
       "url": "_framework\/Microsoft.AspNetCore.Components.WebAssembly.Authentication.wasm"
     },
     {
@@ -145,7 +145,7 @@
       "url": "_framework\/Microsoft.Extensions.Configuration.wasm"
     },
     {
-      "hash": "sha256-3aRVyZ28InFOdlCEx2qQPBYX1Vt\/YCXLDqq1HLzHfJ0=",
+      "hash": "sha256-2GC1CdJZzJswf++uBBVbTfLMYiabGZkVVbPyPaF4UKo=",
       "url": "_framework\/Microsoft.Extensions.DependencyInjection.Abstractions.wasm"
     },
     {
@@ -289,7 +289,7 @@
       "url": "_framework\/System.ObjectModel.wasm"
     },
     {
-      "hash": "sha256-P0iaHexqKz21eKR\/R6teTTgSH8v6SYp1zFOoEL0UYKI=",
+      "hash": "sha256-EeqEatjoLV9NNrqaZ\/Is6gNYgoKepXtlv2xl3M5THwg=",
       "url": "_framework\/System.Private.CoreLib.wasm"
     },
     {
@@ -389,5 +389,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "eQT\/h60y"
+  "version": "BzXgC34K"
 };

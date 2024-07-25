@@ -36,8 +36,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in itineraryItems)
+                    @for (int i = 0; i < itineraryItems.Count; i++)
                     {
+                        var item = itineraryItems[i];
+                        var itemIndex = i;
                         <tr>
                             <td><input @bind="item.Day" /></td>
                             <td><input type="date" @bind="item.Date" @bind:format="yyyy-MM-dd" /></td>
@@ -45,7 +47,9 @@
                             <td><input @bind="item.Activity" /></td>
                             <td><input @bind="item.Location" /></td>
                             <td><input type="checkbox" @bind="item.IsChecked" /></td>
-                            <td></td>
+                            <td>
+                                <button class="btn btn-danger" @onclick="() => DeleteItem(itemIndex + 1)">Delete</button>
+                            </td>
                         </tr>
                     }
                     <tr>
@@ -148,6 +152,19 @@
         catch (Exception ex)
         {
             errorMessage = $"Error adding new item: {ex.Message}";
+        }
+    }
+    private async Task DeleteItem(int rowIndex)
+    {
+        try
+        {
+            await ItineraryService.DeleteItineraryItem(rowIndex);
+            itineraryItems.RemoveAt(rowIndex - 1); // Adjust for 0-based index
+            errorMessage = null;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting item: {ex.Message}";
         }
     }
 }

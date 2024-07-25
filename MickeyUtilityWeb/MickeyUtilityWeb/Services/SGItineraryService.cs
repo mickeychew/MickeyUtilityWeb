@@ -229,7 +229,7 @@ namespace MickeyUtilityWeb.Services
                     for (int row = 2; row <= rowCount; row++)
                     {
                         var timeString = worksheet.Cells[row, 4].Value?.ToString();
-                        _logger.LogInformation($"Raw time string from Excel: {timeString}");
+                
 
                         var item = new ItineraryItem
                         {
@@ -257,14 +257,54 @@ namespace MickeyUtilityWeb.Services
                 throw;
             }
         }
+        public async Task DeleteItineraryItem(int rowIndex)
+        {
+            try
+            {
+                _logger.LogInformation($"Attempting to delete itinerary item at row index {rowIndex}");
 
+                var accessToken = await GetAccessTokenAsync();
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+                var (currentRows, currentColumns, rangeAddress) = await GetCurrentRange();
+                _logger.LogInformation($"Current range: Rows={currentRows}, Columns={currentColumns}, Address={rangeAddress}");
+
+                if (rowIndex < 1 || rowIndex >= currentRows)
+                {
+                    _logger.LogError($"Invalid row index: {rowIndex}. Valid range is 1 to {currentRows - 1}");
+                    throw new ArgumentOutOfRangeException(nameof(rowIndex), "Invalid row index");
+                }
+
+                // Delete the specific row
+                var deleteRowRange = $"Sheet1!A{rowIndex}:G{rowIndex}";
+                _logger.LogInformation($"Deleting row range: {deleteRowRange}");
+                var deleteResponse = await _httpClient.PostAsync(
+                    $"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/range(address='{deleteRowRange}')/delete",
+                    new StringContent("{\"shift\": \"Up\"}", System.Text.Encoding.UTF8, "application/json")
+                );
+
+                if (!deleteResponse.IsSuccessStatusCode)
+                {
+                    var errorContent = await deleteResponse.Content.ReadAsStringAsync();
+                    _logger.LogError($"Error response from OneDrive when deleting row: {errorContent}");
+                    throw new HttpRequestException($"Error deleting row from OneDrive: {errorContent}");
+                }
+
+                _logger.LogInformation($"Successfully deleted item at row index {rowIndex}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting itinerary item at row index {rowIndex}");
+                throw;
+            }
+        }
         private string FormatTimeString(string timeString)
         {
-            _logger.LogInformation($"Formatting time string: {timeString}");
+
 
             if (string.IsNullOrWhiteSpace(timeString))
             {
-                _logger.LogInformation("Time string is null or empty");
+             
                 return string.Empty;
             }
 
@@ -278,20 +318,17 @@ namespace MickeyUtilityWeb.Services
             {
                 var formattedStart = FormatSingleTime(times[0]);
                 var formattedEnd = FormatSingleTime(times[1]);
-                _logger.LogInformation($"Formatted time range: {formattedStart} - {formattedEnd}");
                 return $"{formattedStart} - {formattedEnd}";
             }
             else
             {
                 var formattedTime = FormatSingleTime(timeString);
-                _logger.LogInformation($"Formatted single time: {formattedTime}");
                 return formattedTime;
             }
         }
 
         private string FormatSingleTime(string timeString)
         {
-            _logger.LogInformation($"Formatting single time: {timeString}");
 
             if (DateTime.TryParse(timeString, out DateTime parsedDateTime))
             {
@@ -300,22 +337,18 @@ namespace MickeyUtilityWeb.Services
 
             if (DateTime.TryParseExact(timeString, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedTime))
             {
-                _logger.LogInformation($"Parsed as H:mm: {parsedTime:HH:mm}");
                 return parsedTime.ToString("HH:mm");
             }
             else if (DateTime.TryParseExact(timeString, "h:mm tt", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedTime))
             {
-                _logger.LogInformation($"Parsed as h:mm tt: {parsedTime:HH:mm}");
                 return parsedTime.ToString("HH:mm");
             }
             else if (double.TryParse(timeString, out double excelTime))
             {
                 var convertedTime = DateTime.FromOADate(excelTime).ToString("HH:mm");
-                _logger.LogInformation($"Parsed as Excel time: {convertedTime}");
                 return convertedTime;
             }
 
-            _logger.LogWarning($"Failed to parse time: {timeString}");
             return timeString; // Return original string if parsing fails
         }
 

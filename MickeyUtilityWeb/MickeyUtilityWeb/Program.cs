@@ -2,6 +2,7 @@ using MickeyUtilityWeb.Services;
 using MickeyUtilityWeb;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -25,11 +26,12 @@ builder.Services.AddMsalAuthentication(options =>
     options.ProviderOptions.DefaultAccessTokenScopes.Add("https://graph.microsoft.com/Files.Read");
     options.ProviderOptions.DefaultAccessTokenScopes.Add("https://graph.microsoft.com/Sites.ReadWrite.All");
     options.ProviderOptions.LoginMode = "redirect";
-
     options.ProviderOptions.Authentication.RedirectUri = $"{baseAddress}authentication/login-callback";
     options.ProviderOptions.Authentication.PostLogoutRedirectUri = baseAddress;
 });
 
 builder.Services.AddScoped<SGItineraryService>();
+
+builder.Services.AddApiAuthorization();
 
 await builder.Build().RunAsync();

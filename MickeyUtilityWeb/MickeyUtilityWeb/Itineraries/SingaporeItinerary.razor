@@ -1,106 +1,89 @@
 ﻿@page "/sgitinerary"
 @using MickeyUtilityWeb.Models
 @using MickeyUtilityWeb.Services
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inject SGItineraryService ItineraryService
 @inject NavigationManager NavigationManager
 @inject IAccessTokenProvider TokenProvider
 
-<h3>Singapore Itinerary</h3>
-@if (isAuthenticated)
-{
-    <button class="btn btn-secondary" @onclick="Logout">Log out</button>
-}
-@if (!isAuthenticated)
-{
-    <div>
+<AuthorizeView>
+    <Authorized>
+        <h3>Singapore Itinerary</h3>
+        @if (isLoading)
+        {
+            <p>Loading...</p>
+        }
+        else if (errorMessage != null)
+        {
+            <div class="alert alert-danger">
+                @errorMessage
+                <button class="btn btn-primary" @onclick="TryAgain">Try Again</button>
+            </div>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Activity</th>
+                        <th>Location</th>
+                        <th>Completed</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in itineraryItems)
+                    {
+                        <tr>
+                            <td><input @bind="item.Day" /></td>
+                            <td><input type="date" @bind="item.Date" @bind:format="yyyy-MM-dd" /></td>
+                            <td><input @bind="item.TimeString" /></td>
+                            <td><input @bind="item.Activity" /></td>
+                            <td><input @bind="item.Location" /></td>
+                            <td><input type="checkbox" @bind="item.IsChecked" /></td>
+                            <td></td>
+                        </tr>
+                    }
+                    <tr>
+                        <td><input @bind="newItem.Day" placeholder="Day" /></td>
+                        <td><input type="date" @bind="newItem.Date" @bind:format="yyyy-MM-dd" /></td>
+                        <td><input @bind="newItem.TimeString" placeholder="Time" /></td>
+                        <td><input @bind="newItem.Activity" placeholder="Activity" /></td>
+                        <td><input @bind="newItem.Location" placeholder="Location" /></td>
+                        <td><input type="checkbox" @bind="newItem.IsChecked" /></td>
+                        <td><button class="btn btn-success" @onclick="AddNewItem">Add</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button @onclick="SaveChanges" class="btn btn-primary">Save Changes</button>
+        }
+    </Authorized>
+    <NotAuthorized>
         <p>You need to log in to access the itinerary.</p>
-        <button class="btn btn-primary" @onclick="Login">Log in</button>
-    </div>
-}
-else if (isLoading)
-{
-    <p>Loading...</p>
-}
-else if (errorMessage != null)
-{
-    <div class="alert alert-danger">
-        @errorMessage
-        <button class="btn btn-primary" @onclick="TryAgain">Try Again</button>
-    </div>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Day</th>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Activity</th>
-                <th>Location</th>
-                <th>Completed</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in itineraryItems)
-            {
-                <tr>
-                    <td><input @bind="item.Day" /></td>
-                    <td><input type="date" @bind="item.Date" @bind:format="yyyy-MM-dd" /></td>
-                    <td><input @bind="item.TimeString" /></td>
-                    <td><input @bind="item.Activity" /></td>
-                    <td><input @bind="item.Location" /></td>
-                    <td><input type="checkbox" @bind="item.IsChecked" /></td>
-                    <td></td>
-                </tr>
-            }
-            <tr>
-                <td><input @bind="newItem.Day" placeholder="Day" /></td>
-                <td><input type="date" @bind="newItem.Date" @bind:format="yyyy-MM-dd" /></td>
-                <td><input @bind="newItem.TimeString" placeholder="Time" /></td>
-                <td><input @bind="newItem.Activity" placeholder="Activity" /></td>
-                <td><input @bind="newItem.Location" placeholder="Location" /></td>
-                <td><input type="checkbox" @bind="newItem.IsChecked" /></td>
-                <td><button class="btn btn-success" @onclick="AddNewItem">Add</button></td>
-            </tr>
-        </tbody>
-    </table>
-    <button @onclick="SaveChanges" class="btn btn-primary">Save Changes</button>
-}
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     private List<ItineraryItem> itineraryItems = new List<ItineraryItem>();
     private ItineraryItem newItem = new ItineraryItem { Date = DateTime.Today };
     private bool isLoading = true;
-    private bool isAuthenticated = false;
     private string errorMessage;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        await CheckAuthenticationState();
-        if (isAuthenticated)
+        var authState = await AuthenticationStateTask;
+        if (authState.User.Identity.IsAuthenticated)
         {
             await LoadItinerary();
         }
     }
-
-    private async Task CheckAuthenticationState()
-    {
-        var authState = await TokenProvider.RequestAccessToken();
-        isAuthenticated = authState.TryGetToken(out _);
-    }
-
-    private void Login()
-    {
-        NavigationManager.NavigateToLogin("authentication/login");
-    }
-    private void Logout()
-    {
-        NavigationManager.NavigateToLogout("authentication/logout");
-    }
-
 
     private async Task LoadItinerary()
     {
@@ -108,15 +91,19 @@ else
         errorMessage = null;
         try
         {
-            itineraryItems = await ItineraryService.GetItineraryFromOneDrive();
+            var tokenResult = await TokenProvider.RequestAccessToken();
+            if (tokenResult.TryGetToken(out var token))
+            {
+                itineraryItems = await ItineraryService.GetItineraryFromOneDrive();
+            }
+            else
+            {
+                errorMessage = "Failed to acquire access token.";
+            }
         }
         catch (Exception ex)
         {
             errorMessage = $"Error loading itinerary: {ex.Message}";
-            if (ex.Message.Contains("Authentication required"))
-            {
-                isAuthenticated = false;
-            }
         }
         finally
         {
@@ -134,10 +121,6 @@ else
         catch (Exception ex)
         {
             errorMessage = $"Error saving changes: {ex.Message}";
-            if (ex.Message.Contains("Authentication required"))
-            {
-                isAuthenticated = false;
-            }
         }
     }
 
@@ -160,15 +143,11 @@ else
             itineraryItems.Add(newItem);
             newItem = new ItineraryItem { Date = DateTime.Today };
             errorMessage = null;
-            await SaveChanges();  // Save changes immediately after adding
+            await SaveChanges();
         }
         catch (Exception ex)
         {
             errorMessage = $"Error adding new item: {ex.Message}";
-            if (ex.Message.Contains("Authentication required"))
-            {
-                isAuthenticated = false;
-            }
         }
     }
 }

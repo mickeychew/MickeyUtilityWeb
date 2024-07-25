@@ -1,7 +1,6 @@
-﻿@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-@inherits LayoutComponentBase
-@inject NavigationManager NavigationManager
-@inject SignOutSessionStateManager SignOutManager
+﻿@inherits LayoutComponentBase
+@using MickeyUtilityWeb.Shared
+@using Microsoft.AspNetCore.Components.Authorization
 
 <div class="page">
     <div class="sidebar">
@@ -9,20 +8,14 @@
     </div>
 
     <main>
-        <div class="top-row px-4 auth">
+        <div class="top-row px-4">
             <LoginDisplay />
         </div>
 
         <article class="content px-4">
-            @Body
+            <CascadingAuthenticationState>
+                @Body
+            </CascadingAuthenticationState>
         </article>
     </main>
 </div>
-
-@code {
-    private async Task BeginSignOut(MouseEventArgs args)
-    {
-        await SignOutManager.SetSignOutState();
-        NavigationManager.NavigateToLogout("authentication/logout");
-    }
-}

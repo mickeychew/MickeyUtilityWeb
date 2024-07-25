@@ -7,8 +7,6 @@ using MickeyUtilityWeb.Models;
 using Microsoft.Extensions.Logging;
 using System.Text.Json.Serialization;
 using OfficeOpenXml;
-using static MickeyUtilityWeb.Services.SGItineraryService;
-using System.Net.Http;
 
 namespace MickeyUtilityWeb.Services
 {
@@ -62,7 +60,6 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
- 
         public async Task UpdateItineraryInOneDrive(List<ItineraryItem> itinerary)
         {
             try
@@ -70,33 +67,29 @@ namespace MickeyUtilityWeb.Services
                 var accessToken = await GetAccessTokenAsync();
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-                // Get the current range
                 var (currentRows, currentColumns) = await GetCurrentRangeUpdate();
 
-                // Prepare the update data
                 var updateData = new List<object[]>
-        {
-            new object[] { "IsChecked", "Day", "Date", "Time", "Activity", "Icon", "Location" }
-        };
+                {
+                    new object[] { "IsChecked", "Day", "Date", "Time", "Activity", "Icon", "Location" }
+                };
 
                 updateData.AddRange(itinerary.Select(item => new object[]
                 {
-            item.IsChecked,
-            item.Day,
-            item.Date.ToString("yyyy-MM-dd"),
-            item.TimeString,
-            item.Activity,
-            item.Icon ?? "",
-            item.Location
+                    item.IsChecked,
+                    item.Day,
+                    item.Date.ToString("yyyy-MM-dd"),
+                    item.TimeString,
+                    item.Activity,
+                    item.Icon ?? "",
+                    item.Location
                 }));
 
-                // Ensure we have at least as many rows as the current range
                 while (updateData.Count < currentRows)
                 {
                     updateData.Add(new object[currentColumns]);
                 }
 
-                // Ensure each row has the correct number of columns
                 for (int i = 0; i < updateData.Count; i++)
                 {
                     if (updateData[i].Length < currentColumns)
@@ -110,14 +103,12 @@ namespace MickeyUtilityWeb.Services
                     }
                 }
 
-                // Prepare the update request
                 var updateRange = new { values = updateData };
                 var json = JsonSerializer.Serialize(updateRange);
                 _logger.LogInformation($"Sending update request with data: {json}");
 
                 var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-                // Send the update request to update the entire range
                 var response = await _httpClient.PatchAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/usedRange", content);
 
                 if (!response.IsSuccessStatusCode)
@@ -135,6 +126,7 @@ namespace MickeyUtilityWeb.Services
                 throw;
             }
         }
+
         private async Task<(int rows, int columns)> GetCurrentRangeUpdate()
         {
             var response = await _httpClient.GetAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/usedRange");
@@ -148,6 +140,7 @@ namespace MickeyUtilityWeb.Services
             public object[][] Values { get; set; }
             public string Address { get; set; }
         }
+
         private async Task<(int rows, int columns, string address)> GetCurrentRange()
         {
             var response = await _httpClient.GetAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/usedRange");
@@ -155,72 +148,49 @@ namespace MickeyUtilityWeb.Services
             var content = await response.Content.ReadFromJsonAsync<GraphRangeResponse>();
             return (content.Values.Length, content.Values[0].Length, content.Address);
         }
+
         public async Task AddItineraryItem(ItineraryItem newItem)
         {
             try
             {
-                _logger.LogInformation($"Starting to add new itinerary item: {JsonSerializer.Serialize(newItem)}");
-
                 var currentItems = await GetItineraryFromOneDrive();
-                _logger.LogInformation($"Current number of items: {currentItems.Count}");
                 currentItems.Add(newItem);
-                _logger.LogInformation($"New number of items after adding: {currentItems.Count}");
 
                 var accessToken = await GetAccessTokenAsync();
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-                // Get the current range
                 var (currentRows, currentColumns, rangeAddress) = await GetCurrentRange();
-                _logger.LogInformation($"Current range: Rows={currentRows}, Columns={currentColumns}, Address={rangeAddress}");
 
-                // Prepare the update data
                 var updateData = new List<object[]>
-        {
-            new object[] { "IsChecked", "Day", "Date", "Time", "Activity", "Icon", "Location" }
-        };
+                {
+                    new object[] { "IsChecked", "Day", "Date", "Time", "Activity", "Icon", "Location" }
+                };
 
                 updateData.AddRange(currentItems.Select(item => new object[]
                 {
-            item.IsChecked,
-            item.Day,
-            item.Date.ToString("yyyy-MM-dd"),
-            item.TimeString,
-            item.Activity,
-            item.Icon ?? "",
-            item.Location
+                    item.IsChecked,
+                    item.Day,
+                    item.Date.ToString("yyyy-MM-dd"),
+                    item.TimeString,
+                    item.Activity,
+                    item.Icon ?? "",
+                    item.Location
                 }));
 
-                _logger.LogInformation($"Update data rows: {updateData.Count}, columns: {updateData[0].Length}");
-
-                // Calculate the new range address
                 string newRangeAddress = $"Sheet1!A1:G{updateData.Count}";
-                _logger.LogInformation($"New range address: {newRangeAddress}");
 
-                // Prepare the update request
                 var updateRange = new { values = updateData };
                 var json = JsonSerializer.Serialize(updateRange);
-                _logger.LogInformation($"Sending update request with data: {json}");
 
                 var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-                // Log the full request details
-                _logger.LogInformation($"Request URL: {GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/range(address='{newRangeAddress}')");
-                _logger.LogInformation($"Request method: PATCH");
-                _logger.LogInformation($"Request headers: {string.Join(", ", _httpClient.DefaultRequestHeaders.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}"))}");
-                _logger.LogInformation($"Request content: {await content.ReadAsStringAsync()}");
-
-                // Send the update request to update the entire range
                 var response = await _httpClient.PatchAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/range(address='{newRangeAddress}')", content);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError($"Error response from API: {errorContent}");
                     throw new HttpRequestException($"Error adding new item to OneDrive: {errorContent}");
                 }
-
-                var successContent = await response.Content.ReadAsStringAsync();
-                _logger.LogInformation($"Successfully added new itinerary item. Response: {successContent}");
             }
             catch (Exception ex)
             {
@@ -236,7 +206,6 @@ namespace MickeyUtilityWeb.Services
                 var accessToken = await GetAccessTokenAsync();
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-                // First, get the file content
                 var fileContentResponse = await _httpClient.GetAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/content");
 
                 if (!fileContentResponse.IsSuccessStatusCode)
@@ -248,29 +217,35 @@ namespace MickeyUtilityWeb.Services
 
                 var excelContent = await fileContentResponse.Content.ReadAsByteArrayAsync();
 
-                // Now, process the Excel content
                 using (var stream = new MemoryStream(excelContent))
                 using (var package = new ExcelPackage(stream))
                 {
-                    var worksheet = package.Workbook.Worksheets[0]; // Assuming data is in the first worksheet
+                    var worksheet = package.Workbook.Worksheets[0];
                     var rowCount = worksheet.Dimension.Rows;
                     var colCount = worksheet.Dimension.Columns;
 
                     var records = new List<ItineraryItem>();
 
-                    // Skip the header row
                     for (int row = 2; row <= rowCount; row++)
                     {
-                        records.Add(new ItineraryItem
+                        var timeString = worksheet.Cells[row, 4].Value?.ToString();
+                        _logger.LogInformation($"Raw time string from Excel: {timeString}");
+
+                        var item = new ItineraryItem
                         {
                             IsChecked = bool.Parse(worksheet.Cells[row, 1].Value?.ToString() ?? "false"),
                             Day = worksheet.Cells[row, 2].Value?.ToString(),
                             Date = DateTime.Parse(worksheet.Cells[row, 3].Value?.ToString() ?? DateTime.MinValue.ToString()),
-                            TimeString = worksheet.Cells[row, 4].Value?.ToString(),
+                            TimeString = FormatTimeString(timeString),
                             Activity = worksheet.Cells[row, 5].Value?.ToString(),
                             Icon = worksheet.Cells[row, 6].Value?.ToString(),
                             Location = worksheet.Cells[row, 7].Value?.ToString()
-                        });
+                        };
+
+                        if (!string.IsNullOrWhiteSpace(item.Day) || !string.IsNullOrWhiteSpace(item.Activity))
+                        {
+                            records.Add(item);
+                        }
                     }
 
                     return records;
@@ -281,6 +256,67 @@ namespace MickeyUtilityWeb.Services
                 _logger.LogError(ex, "Error reading from OneDrive");
                 throw;
             }
+        }
+
+        private string FormatTimeString(string timeString)
+        {
+            _logger.LogInformation($"Formatting time string: {timeString}");
+
+            if (string.IsNullOrWhiteSpace(timeString))
+            {
+                _logger.LogInformation("Time string is null or empty");
+                return string.Empty;
+            }
+
+            if (DateTime.TryParse(timeString, out DateTime parsedDateTime))
+            {
+                return parsedDateTime.ToString("HH:mm");
+            }
+
+            var times = timeString.Split('-').Select(t => t.Trim()).ToArray();
+            if (times.Length == 2)
+            {
+                var formattedStart = FormatSingleTime(times[0]);
+                var formattedEnd = FormatSingleTime(times[1]);
+                _logger.LogInformation($"Formatted time range: {formattedStart} - {formattedEnd}");
+                return $"{formattedStart} - {formattedEnd}";
+            }
+            else
+            {
+                var formattedTime = FormatSingleTime(timeString);
+                _logger.LogInformation($"Formatted single time: {formattedTime}");
+                return formattedTime;
+            }
+        }
+
+        private string FormatSingleTime(string timeString)
+        {
+            _logger.LogInformation($"Formatting single time: {timeString}");
+
+            if (DateTime.TryParse(timeString, out DateTime parsedDateTime))
+            {
+                return parsedDateTime.ToString("HH:mm");
+            }
+
+            if (DateTime.TryParseExact(timeString, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedTime))
+            {
+                _logger.LogInformation($"Parsed as H:mm: {parsedTime:HH:mm}");
+                return parsedTime.ToString("HH:mm");
+            }
+            else if (DateTime.TryParseExact(timeString, "h:mm tt", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedTime))
+            {
+                _logger.LogInformation($"Parsed as h:mm tt: {parsedTime:HH:mm}");
+                return parsedTime.ToString("HH:mm");
+            }
+            else if (double.TryParse(timeString, out double excelTime))
+            {
+                var convertedTime = DateTime.FromOADate(excelTime).ToString("HH:mm");
+                _logger.LogInformation($"Parsed as Excel time: {convertedTime}");
+                return convertedTime;
+            }
+
+            _logger.LogWarning($"Failed to parse time: {timeString}");
+            return timeString; // Return original string if parsing fails
         }
 
         private class DateTimeConverter : JsonConverter<DateTime>
@@ -335,52 +371,6 @@ namespace MickeyUtilityWeb.Services
             }
             return DateTime.MinValue;
         }
-
-        private TimeEntry ParseTimeEntry(string timeString)
-        {
-            var times = timeString.Split('-').Select(t => t.Trim()).ToArray();
-            if (times.Length == 2)
-            {
-                return new TimeEntry
-                {
-                    Start = ParseTime(times[0]),
-                    End = ParseTime(times[1])
-                };
-            }
-            else
-            {
-                return new TimeEntry
-                {
-                    Start = ParseTime(timeString),
-                    End = null
-                };
-            }
-        }
-
-        private TimeSpan? ParseTime(string timeString)
-        {
-            if (double.TryParse(timeString, NumberStyles.Any, CultureInfo.InvariantCulture, out double excelTime))
-            {
-                return TimeSpan.FromDays(excelTime);
-            }
-
-            string[] formats = { "h:mm", "H:mm", "h:mm tt", "H:mm tt" };
-            foreach (var format in formats)
-            {
-                if (DateTime.TryParseExact(timeString, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedTime))
-                {
-                    return parsedTime.TimeOfDay;
-                }
-            }
-
-            if (DateTime.TryParse(timeString, out DateTime fallbackParsedTime))
-            {
-                return fallbackParsedTime.TimeOfDay;
-            }
-
-            _logger.LogWarning($"Failed to parse time: {timeString}");
-            return null;
-        }
     }
 
     public class TimeEntry
@@ -405,6 +395,4 @@ namespace MickeyUtilityWeb.Services
             return time?.ToString("hh\\:mm") ?? "";
         }
     }
-
-  
 }

@@ -16,7 +16,12 @@
                     }
                 </NotAuthorized>
                 <Authorizing>
-                    <p>Authorizing...</p>
+                    <div class="text-center">
+                        <p>Authorizing...</p>
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
                 </Authorizing>
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
@@ -24,7 +29,10 @@
         <NotFound>
             <PageTitle>Not found</PageTitle>
             <LayoutView Layout="@typeof(MainLayout)">
-                <p role="alert">Sorry, there's nothing at this address.</p>
+                <div class="text-center">
+                    <h1 class="display-4">404</h1>
+                    <p class="lead">Sorry, there's nothing at this address.</p>
+                </div>
             </LayoutView>
         </NotFound>
     </Router>

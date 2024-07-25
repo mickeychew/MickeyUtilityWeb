@@ -1,12 +1,21 @@
 ﻿@page "/sgitinerary"
 @using MickeyUtilityWeb.Models
 @using MickeyUtilityWeb.Services
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inject SGItineraryService ItineraryService
 @inject NavigationManager NavigationManager
+@inject IAccessTokenProvider TokenProvider
 
 <h3>Singapore Itinerary</h3>
 
-@if (isLoading)
+@if (!isAuthenticated)
+{
+    <div>
+        <p>You need to log in to access the itinerary.</p>
+        <button class="btn btn-primary" @onclick="Login">Log in</button>
+    </div>
+}
+else if (isLoading)
 {
     <p>Loading...</p>
 }
@@ -16,10 +25,6 @@ else if (errorMessage != null)
         @errorMessage
         <button class="btn btn-primary" @onclick="TryAgain">Try Again</button>
     </div>
-}
-else if (itineraryItems == null || !itineraryItems.Any())
-{
-    <p>No itinerary items found.</p>
 }
 else
 {
@@ -32,6 +37,7 @@ else
                 <th>Activity</th>
                 <th>Location</th>
                 <th>Completed</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -44,21 +50,48 @@ else
                     <td><input @bind="item.Activity" /></td>
                     <td><input @bind="item.Location" /></td>
                     <td><input type="checkbox" @bind="item.IsChecked" /></td>
+                    <td></td>
                 </tr>
             }
+            <tr>
+                <td><input @bind="newItem.Day" placeholder="Day" /></td>
+                <td><input type="date" @bind="newItem.Date" @bind:format="yyyy-MM-dd" /></td>
+                <td><input @bind="newItem.TimeString" placeholder="Time" /></td>
+                <td><input @bind="newItem.Activity" placeholder="Activity" /></td>
+                <td><input @bind="newItem.Location" placeholder="Location" /></td>
+                <td><input type="checkbox" @bind="newItem.IsChecked" /></td>
+                <td><button class="btn btn-success" @onclick="AddNewItem">Add</button></td>
+            </tr>
         </tbody>
     </table>
     <button @onclick="SaveChanges" class="btn btn-primary">Save Changes</button>
 }
 
 @code {
-    private List<ItineraryItem> itineraryItems;
+    private List<ItineraryItem> itineraryItems = new List<ItineraryItem>();
+    private ItineraryItem newItem = new ItineraryItem { Date = DateTime.Today };
     private bool isLoading = true;
+    private bool isAuthenticated = false;
     private string errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadItinerary();
+        await CheckAuthenticationState();
+        if (isAuthenticated)
+        {
+            await LoadItinerary();
+        }
+    }
+
+    private async Task CheckAuthenticationState()
+    {
+        var authState = await TokenProvider.RequestAccessToken();
+        isAuthenticated = authState.TryGetToken(out _);
+    }
+
+    private void Login()
+    {
+        NavigationManager.NavigateToLogin("authentication/login");
     }
 
     private async Task LoadItinerary()
@@ -72,6 +105,10 @@ else
         catch (Exception ex)
         {
             errorMessage = $"Error loading itinerary: {ex.Message}";
+            if (ex.Message.Contains("Authentication required"))
+            {
+                isAuthenticated = false;
+            }
         }
         finally
         {
@@ -84,15 +121,46 @@ else
         try
         {
             await ItineraryService.UpdateItineraryInOneDrive(itineraryItems);
+            errorMessage = null;
         }
         catch (Exception ex)
         {
             errorMessage = $"Error saving changes: {ex.Message}";
+            if (ex.Message.Contains("Authentication required"))
+            {
+                isAuthenticated = false;
+            }
         }
     }
 
     private void TryAgain()
     {
         NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+
+    private async Task AddNewItem()
+    {
+        if (string.IsNullOrWhiteSpace(newItem.Day) || string.IsNullOrWhiteSpace(newItem.Activity))
+        {
+            errorMessage = "Day and Activity are required fields.";
+            return;
+        }
+
+        try
+        {
+            await ItineraryService.AddItineraryItem(newItem);
+            itineraryItems.Add(newItem);
+            newItem = new ItineraryItem { Date = DateTime.Today };
+            errorMessage = null;
+            await SaveChanges();  // Save changes immediately after adding
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error adding new item: {ex.Message}";
+            if (ex.Message.Contains("Authentication required"))
+            {
+                isAuthenticated = false;
+            }
+        }
     }
 }

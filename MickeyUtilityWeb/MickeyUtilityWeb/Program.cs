@@ -14,17 +14,16 @@ builder.Services.AddMsalAuthentication(options =>
 {
     builder.Configuration.Bind("AzureAd", options.ProviderOptions.Authentication);
     options.ProviderOptions.DefaultAccessTokenScopes.Add("https://graph.microsoft.com/Files.ReadWrite.All");
-    
-    // Set the redirect URI dynamically based on the environment
+    options.ProviderOptions.DefaultAccessTokenScopes.Add("https://graph.microsoft.com/Files.Read.All");
+    options.ProviderOptions.DefaultAccessTokenScopes.Add("https://graph.microsoft.com/Files.ReadWrite");
+    options.ProviderOptions.DefaultAccessTokenScopes.Add("https://graph.microsoft.com/Files.Read");
+    options.ProviderOptions.DefaultAccessTokenScopes.Add("https://graph.microsoft.com/Sites.ReadWrite.All");
+    options.ProviderOptions.LoginMode = "redirect";
+
+    // Set the correct redirect URI
     var baseUri = builder.HostEnvironment.BaseAddress.TrimEnd('/');
-    if (baseUri.Contains("github.io"))
-    {
-        options.ProviderOptions.Authentication.RedirectUri = $"{baseUri}/authentication/login-callback";
-    }
-    else
-    {
-        options.ProviderOptions.Authentication.RedirectUri = $"{baseUri}/authentication/login-callback";
-    }
+    options.ProviderOptions.Authentication.RedirectUri = $"{baseUri}/authentication/login-callback";
+    options.ProviderOptions.Authentication.PostLogoutRedirectUri = baseUri;
 });
 
 builder.Services.AddScoped<SGItineraryService>();

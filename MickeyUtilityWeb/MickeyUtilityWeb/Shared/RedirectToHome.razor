@@ -1,0 +1,14 @@
+﻿@page "/authentication/login-callback"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject NavigationManager NavigationManager
+
+<RemoteAuthenticatorView Action="@Action" />
+
+@code {
+    [Parameter] public string Action { get; set; } = "login-callback";
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.NavigateTo("/sgitinerary");
+    }
+}

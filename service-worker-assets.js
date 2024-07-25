@@ -1,6 +1,10 @@
 ﻿self.assetsManifest = {
   "assets": [
     {
+      "hash": "sha256-+uA9IGwdtoUTRjq0vJzwAhiW4WWSJX14nGu0KB2bbDA=",
+      "url": "404.html"
+    },
+    {
       "hash": "sha256-yis2dNdJ6e9R472mcuwUOsxBPCQX3snSMmHAL3zu2D8=",
       "url": "css\/app.css"
     },
@@ -25,7 +29,7 @@
       "url": "icon-512.png"
     },
     {
-      "hash": "sha256-XQkn2sY3FsAIukUbQI8r3N4IRejJUEl7HU9YIpgZCAY=",
+      "hash": "sha256-GgoYasa0\/pzYtEh5W5WJk6rOUP+nkk0FMGzEbbTgyVg=",
       "url": "index.html"
     },
     {
@@ -69,7 +73,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-sNdRpD07Xq\/XoP3MK+4+lGiGAk9Aw1nbQDdclH0yffI=",
+      "hash": "sha256-XlaKEbl5IHl4oBkodeINU\/1LlanVzLVz1xkH\/iWPabI=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -85,7 +89,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-wr\/5109jHUu5P6nAQjhLbFpHd3p2lhzN+mPsyUYMM7c=",
+      "hash": "sha256-EfH2nK8RI8ZcRwwgTZmceOfyOzGnYuVCdVnpNUHqovE=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -385,5 +389,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "bBOmF2ad"
+  "version": "eQT\/h60y"
 };

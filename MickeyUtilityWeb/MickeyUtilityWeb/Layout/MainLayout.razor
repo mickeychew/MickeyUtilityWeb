@@ -1,6 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inherits LayoutComponentBase
-@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+@inject SignOutSessionStateManager SignOutManager
 
 <div class="page">
     <div class="sidebar">
@@ -8,15 +9,8 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
-            <AuthorizeView>
-                <Authorized>
-                    <button class="btn btn-link" @onclick="BeginSignOut">Log out</button>
-                </Authorized>
-                <NotAuthorized>
-                    <button class="btn btn-link" @onclick="BeginSignIn">Log in</button>
-                </NotAuthorized>
-            </AuthorizeView>
+        <div class="top-row px-4 auth">
+            <LoginDisplay />
         </div>
 
         <article class="content px-4">
@@ -26,13 +20,9 @@
 </div>
 
 @code {
-    private void BeginSignIn()
+    private async Task BeginSignOut(MouseEventArgs args)
     {
-        Navigation.NavigateToLogin("authentication/login");
-    }
-
-    private void BeginSignOut()
-    {
-        Navigation.NavigateToLogout("authentication/logout");
+        await SignOutManager.SetSignOutState();
+        NavigationManager.NavigateToLogout("authentication/logout");
     }
 }

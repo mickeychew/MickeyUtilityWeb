@@ -7,7 +7,10 @@
 @inject IAccessTokenProvider TokenProvider
 
 <h3>Singapore Itinerary</h3>
-
+@if (isAuthenticated)
+{
+    <button class="btn btn-secondary" @onclick="Logout">Log out</button>
+}
 @if (!isAuthenticated)
 {
     <div>
@@ -93,6 +96,11 @@ else
     {
         NavigationManager.NavigateToLogin("authentication/login");
     }
+    private void Logout()
+    {
+        NavigationManager.NavigateToLogout("authentication/logout");
+    }
+
 
     private async Task LoadItinerary()
     {

@@ -22,8 +22,18 @@ builder.Services.AddMsalAuthentication(options =>
 
     // Set the correct redirect URI
     var baseUri = builder.HostEnvironment.BaseAddress.TrimEnd('/');
-    options.ProviderOptions.Authentication.RedirectUri = $"{baseUri}/authentication/login-callback";
-    options.ProviderOptions.Authentication.PostLogoutRedirectUri = baseUri;
+    var githubPagesUri = "https://mickeychew.github.io/MickeyUtilityWeb";
+
+    if (baseUri.StartsWith(githubPagesUri))
+    {
+        options.ProviderOptions.Authentication.RedirectUri = $"{githubPagesUri}/authentication/login-callback";
+        options.ProviderOptions.Authentication.PostLogoutRedirectUri = githubPagesUri;
+    }
+    else
+    {
+        options.ProviderOptions.Authentication.RedirectUri = $"{baseUri}/authentication/login-callback";
+        options.ProviderOptions.Authentication.PostLogoutRedirectUri = baseUri;
+    }
 });
 
 builder.Services.AddScoped<SGItineraryService>();

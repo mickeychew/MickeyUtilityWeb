@@ -1,0 +1,197 @@
+﻿.itinerary-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.itinerary-title {
+    text-align: center;
+    color: #333;
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+}
+
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.error-message {
+    background-color: #ffecec;
+    color: #721c24;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.itinerary-tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.itinerary-tab {
+    background-color: #f1f1f1;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border-radius: 20px;
+}
+
+    .itinerary-tab.active {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+.itinerary-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+    .itinerary-timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 15px;
+        width: 2px;
+        background-color: #ddd;
+    }
+
+.itinerary-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-left: 20px;
+    transition: opacity 0.3s;
+}
+
+    .itinerary-item::before {
+        content: '';
+        position: absolute;
+        left: -7px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #4CAF50;
+    }
+
+    .itinerary-item.completed {
+        opacity: 0.6;
+    }
+
+        .itinerary-item.completed::before {
+            background-color: #9e9e9e;
+        }
+
+.itinerary-item-time {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.itinerary-item-content {
+    display: flex;
+    align-items: flex-start;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.itinerary-icon {
+    font-size: 24px;
+    margin-right: 15px;
+}
+
+.itinerary-item-details {
+    flex-grow: 1;
+}
+
+.itinerary-item-activity {
+    margin: 0 0 5px 0;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.itinerary-item-location {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Icon styles */
+.itinerary-icon-home::before {
+    content: '🏠';
+}
+
+.itinerary-icon-plane::before {
+    content: '✈️';
+}
+
+.itinerary-icon-utensils::before {
+    content: '🍴';
+}
+
+.itinerary-icon-hotel::before {
+    content: '🏨';
+}
+
+.itinerary-icon-coffee::before {
+    content: '☕';
+}
+
+.itinerary-icon-camera::before {
+    content: '📷';
+}
+
+.itinerary-icon-sun::before {
+    content: '☀️';
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .itinerary-container {
+        padding: 10px;
+    }
+
+    .itinerary-title {
+        font-size: 2rem;
+    }
+
+    .itinerary-tabs {
+        flex-wrap: wrap;
+    }
+
+    .itinerary-tab {
+        margin: 5px;
+    }
+
+    .itinerary-item-content {
+        flex-direction: column;
+    }
+
+    .itinerary-icon {
+        margin-bottom: 10px;
+    }
+}

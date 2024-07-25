@@ -17,6 +17,10 @@
       "url": "css\/bootstrap\/bootstrap.min.css.map"
     },
     {
+      "hash": "sha256-E0EIcIuJw+tXqBRBdB2vGTKUydqUMKCu\/EZbeEwvZQ4=",
+      "url": "css\/Itinerary\/Itinerary.css"
+    },
+    {
       "hash": "sha256-4mWsDy3aHl36ZbGt8zByK7Pvd4kRUoNgTYzRnwmPHwg=",
       "url": "favicon.png"
     },
@@ -73,7 +77,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-phNGnTrjFsk8iSeQm7NuD\/j1EJaC\/qp4XeTHFZHcFYA=",
+      "hash": "sha256-MZfcn8nz4J5zCdh9wKEWOP0nfbwfKYKCHa7+fgqRZog=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -89,7 +93,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-yyiUICOpkt\/sJRs67gEPMn+iW1Dc0ZMTvUJ4aBpJUoI=",
+      "hash": "sha256-6TsRNPxF691YiUrwbNvgBcu27eYTIxl7LhwyGgj0Rxg=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -389,5 +393,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "OXswvwiX"
+  "version": "Kcg+O\/d7"
 };

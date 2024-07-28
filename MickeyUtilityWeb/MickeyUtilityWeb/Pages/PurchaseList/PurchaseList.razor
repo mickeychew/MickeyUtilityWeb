@@ -1,96 +1,105 @@
 ﻿@page "/purchaselist"
 @using MickeyUtilityWeb.Services
 @using MickeyUtilityWeb.Models
+@using MickeyUtilityWeb.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inject PurchaseListService PurchaseListService
 @inject NavigationManager NavigationManager
 @inject IAccessTokenProvider TokenProvider
+@inject IJSRuntime JSRuntime
 
 <link href="css/PurchaseList/PurchaseList.css" rel="stylesheet" />
 
 <AuthorizeView>
     <Authorized>
-        <div class="card w-full max-w-3xl mx-auto">
-            <div class="card-header">
-                <h2 class="card-title">Purchase Checklist</h2>
-                <div class="search-container">
-                    <span class="search-icon"></span>
-                    <input type="text" placeholder="Search items..." @bind="searchTerm" @bind:event="oninput" class="search-input" />
+        <div class="purchase-list-container">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Purchase Checklist</h2>
+                    <div class="search-container">
+                        <span class="search-icon"></span>
+                        <input type="text" placeholder="Search items..." @bind="searchTerm" @bind:event="oninput" class="search-input" />
+                    </div>
                 </div>
-            </div>
-            <div class="card-content">
-                @if (isLoading)
-                {
-                    <div class="loading-spinner"></div>
-                }
-                else if (errorMessage != null)
-                {
-                    <div class="alert-danger">
-                        @errorMessage
-                        <button class="btn btn-primary" @onclick="TryAgain">Try Again</button>
-                    </div>
-                }
-                else
-                {
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold mb-2">Budget Overview</h3>
-                        <div class="flex items-center justify-between mb-2">
-                            <span>Total: $@totalBudget.ToString("F2")</span>
-                            <span>Spent: $@spentBudget.ToString("F2")</span>
+                <div class="card-content">
+                    @if (isLoading)
+                    {
+                        <div class="loading-spinner"></div>
+                    }
+                    else if (errorMessage != null)
+                    {
+                        <div class="alert-danger">
+                            @errorMessage
+                            <button class="btn btn-primary" @onclick="TryAgain">Try Again</button>
                         </div>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: @progressPercentage%"></div>
+                    }
+                    else
+                    {
+                        <div class="budget-overview">
+                            <h3>Budget Overview</h3>
+                            <div class="budget-details">
+                                <span>Total: $@totalBudget.ToString("F2")</span>
+                                <span>Spent: $@spentBudget.ToString("F2")</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" style="width: @progressPercentage%"></div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="space-y-4">
-                        @foreach (var item in filteredItems)
-                        {
-                            <div class="flex items-center justify-between p-3 bg-gray-100 rounded-lg transition-colors duration-200 hover:bg-gray-200">
-                                <div class="flex items-center space-x-3">
-                                    <input type="checkbox" checked="@item.Purchased" @onchange="() => TogglePurchased(item)" class="w-5 h-5" />
-                                    <div>
-                                        <input class="font-medium @(item.Purchased ? "line-through text-gray-500" : "")" type="text" @bind="item.Name" @bind:event="oninput" />
-                                        <input class="badge" type="text" @bind="item.Category" @bind:event="oninput" />
+                        <div class="purchase-items">
+                            @foreach (var item in filteredItems)
+                            {
+                                <div class="purchase-item @(item.Purchased ? "purchased" : "") @(item.WarrantyDate < DateTime.Now ? "warranty-expired" : "")">
+                                    <div class="item-details">
+                                        <input type="checkbox" checked="@item.Purchased" @onchange="() => TogglePurchased(item)" />
+                                        <input class="item-name" type="text" @bind="item.Name" @bind:event="oninput" />
+                                        <input class="item-category" type="text" @bind="item.Category" @bind:event="oninput" />
+                                    </div>
+                                    <div class="item-info">
+                                        <input class="item-price" type="number" step="0.01" @bind="item.Price" @bind:event="oninput" />
+                                        <span>x</span>
+                                        <input class="item-quantity" type="number" @bind="item.Quantity" @bind:event="oninput" />
+                                        <input class="item-date" type="date" @bind="item.PurchaseDate" @bind:format="yyyy-MM-dd" />
+                                        <input class="item-date" type="date" @bind="item.WarrantyDate" @bind:format="yyyy-MM-dd" />
+                                        <button class="btn-icon" @onclick="() => RemoveItem(item)">
+                                            <svg class="delete-icon" viewBox="0 0 24 24">
+                                                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                        </button>
                                     </div>
                                 </div>
-                                <div class="flex items-center space-x-3">
-                                    <input class="w-24 font-semibold" type="number" step="0.01" @bind="item.Price" @bind:event="oninput" />
-                                    <span>x</span>
-                                    <input class="w-16" type="number" @bind="item.Quantity" @bind:event="oninput" />
-                                    <input class="w-32" type="date" @bind="item.PurchaseDate" @bind:format="yyyy-MM-dd" />
-                                    <input class="w-32" type="date" @bind="item.WarrantyDate" @bind:format="yyyy-MM-dd" />
-                                    <button class="btn btn-ghost btn-sm" @onclick="() => RemoveItem(item)">
-                                        <span class="delete-icon"></span>
-                                    </button>
-                                </div>
-                            </div>
-                        }
-                    </div>
+                            }
+                        </div>
 
-                    <div class="mt-6">
-                        <h3 class="text-lg font-semibold mb-2">Add New Item</h3>
-                        <div class="flex space-x-2 flex-wrap">
-                            <input type="text" placeholder="Item name" @bind="newItem.Name" class="flex-grow" />
-                            <input type="number" step="0.01" placeholder="Price" @bind="newItem.Price" class="w-24" />
-                            <input type="number" placeholder="Quantity" @bind="newItem.Quantity" class="w-24" />
-                            <input type="text" placeholder="Category" @bind="newItem.Category" class="w-32" />
-                            <input type="date" @bind="newItem.PurchaseDate" @bind:format="yyyy-MM-dd" class="w-32" />
-                            <input type="date" @bind="newItem.WarrantyDate" @bind:format="yyyy-MM-dd" class="w-32" />
-                            <button class="btn btn-primary" @onclick="AddNewItem">
-                                <span class="add-icon"></span>
-                                Add
+                        <div class="new-item-form">
+                            <h3>Add New Item</h3>
+                            <div class="form-inputs">
+                                <input type="text" placeholder="Item name" @bind="newItem.Name" />
+                                <input type="number" step="0.01" placeholder="Price" @bind="newItem.Price" />
+                                <input type="number" placeholder="Quantity" @bind="newItem.Quantity" />
+                                <input type="text" placeholder="Category" @bind="newItem.Category" />
+                                <input type="date" @bind="newItem.PurchaseDate" @bind:format="yyyy-MM-dd" />
+                                <input type="date" @bind="newItem.WarrantyDate" @bind:format="yyyy-MM-dd" />
+                                <button class="btn-icon btn-add" @onclick="AddNewItem">
+                                    <svg class="add-icon" viewBox="0 0 24 24">
+                                        <path d="M12 5v14m-7-7h14"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="save-changes">
+                            <button class="btn-icon btn-save" @onclick="UpdatePurchaseList">
+                                <svg class="save-icon" viewBox="0 0 24 24">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                    <polyline points="7 3 7 8 15 8"></polyline>
+                                </svg>
                             </button>
                         </div>
-                    </div>
-
-                    <div class="mt-6">
-                        <button class="btn btn-primary w-full" @onclick="UpdatePurchaseList">
-                            Save Changes
-                        </button>
-                    </div>
-                }
+                    }
+                </div>
             </div>
         </div>
     </Authorized>
@@ -99,6 +108,7 @@
     </NotAuthorized>
 </AuthorizeView>
 
+<Toast @ref="toast" />
 
 @code {
     private List<PurchaseItem> purchaseItems = new List<PurchaseItem>();
@@ -106,6 +116,7 @@
     private bool isLoading = true;
     private string errorMessage;
     private string searchTerm = "";
+    private Toast toast;
 
     private decimal totalBudget => purchaseItems.Sum(item => item.Price * item.Quantity);
     private decimal spentBudget => purchaseItems.Where(item => item.Purchased).Sum(item => item.Price * item.Quantity);
@@ -134,10 +145,12 @@
         try
         {
             purchaseItems = await PurchaseListService.GetPurchaseListFromOneDrive();
+            await toast.ShowToast("Purchase list loaded successfully", "success");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error loading purchase list: {ex.Message}";
+            await toast.ShowToast("Failed to load purchase list", "error");
         }
         finally
         {
@@ -149,6 +162,7 @@
     {
         item.Purchased = !item.Purchased;
         await UpdatePurchaseList();
+        await toast.ShowToast($"Item {(item.Purchased ? "marked as purchased" : "unmarked")}", "info");
     }
 
     private async Task RemoveItem(PurchaseItem item)
@@ -158,10 +172,12 @@
             await PurchaseListService.DeletePurchaseItem(item);
             purchaseItems.Remove(item);
             errorMessage = null;
+            await toast.ShowToast("Item removed successfully", "success");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error deleting item: {ex.Message}";
+            await toast.ShowToast("Failed to remove item", "error");
         }
     }
 
@@ -169,7 +185,7 @@
     {
         if (string.IsNullOrWhiteSpace(newItem.Name) || newItem.Price <= 0)
         {
-            errorMessage = "Name and Price are required fields.";
+            await toast.ShowToast("Name and Price are required fields", "error");
             return;
         }
         try
@@ -179,10 +195,12 @@
             newItem = new PurchaseItem { Quantity = 1 };
             errorMessage = null;
             await UpdatePurchaseList();
+            await toast.ShowToast("New item added successfully", "success");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error adding new item: {ex.Message}";
+            await toast.ShowToast("Failed to add new item", "error");
         }
     }
 
@@ -192,10 +210,12 @@
         {
             await PurchaseListService.UpdatePurchaseListInOneDrive(purchaseItems);
             errorMessage = null;
+            await toast.ShowToast("Purchase list updated successfully", "success");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error updating purchase list: {ex.Message}";
+            await toast.ShowToast("Failed to update purchase list", "error");
         }
     }
 

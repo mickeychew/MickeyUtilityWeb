@@ -3,6 +3,29 @@ using MickeyUtilityWeb.Services;
 
 namespace MickeyUtilityWeb.Models
 {
+    public class TimeEntry
+    {
+        public TimeSpan? Start { get; set; }
+        public TimeSpan? End { get; set; }
+
+        public override string ToString()
+        {
+            if (End.HasValue)
+            {
+                return $"{FormatTime(Start)} - {FormatTime(End)}";
+            }
+            else
+            {
+                return FormatTime(Start);
+            }
+        }
+
+        private string FormatTime(TimeSpan? time)
+        {
+            return time?.ToString("hh\\:mm") ?? "";
+        }
+    }
+
     public class ItineraryItem
     {
         public bool IsChecked { get; set; }
@@ -12,7 +35,6 @@ namespace MickeyUtilityWeb.Models
         public string Activity { get; set; }
         public string Icon { get; set; }
         public string Location { get; set; }
-
         public string TimeString
         {
             get => Time?.ToString() ?? "";
@@ -46,3 +68,4 @@ namespace MickeyUtilityWeb.Models
         }
     }
 }
+     

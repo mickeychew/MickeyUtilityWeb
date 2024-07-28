@@ -91,6 +91,10 @@
 
     private string GetIconClass(string icon)
     {
+        if (string.IsNullOrEmpty(icon))
+        {
+            return "itinerary-icon itinerary-icon-default"; // Provide a default icon class
+        }
         return $"itinerary-icon itinerary-icon-{icon.ToLower()}";
     }
 }

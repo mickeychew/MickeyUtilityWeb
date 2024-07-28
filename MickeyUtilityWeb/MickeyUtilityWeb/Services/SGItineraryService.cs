@@ -1,73 +1,32 @@
-﻿using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
-using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
 using MickeyUtilityWeb.Models;
 using Microsoft.Extensions.Logging;
-using System.Text.Json.Serialization;
 using OfficeOpenXml;
 
 namespace MickeyUtilityWeb.Services
 {
     public class SGItineraryService
     {
-        private readonly HttpClient _httpClient;
-        private readonly IAccessTokenProvider _tokenProvider;
+        private readonly ExcelApiService _excelApiService;
         private readonly ILogger<SGItineraryService> _logger;
-        private const string FILE_NAME = "SGItinerary.xlsx";
         private const string FILE_ID = "85E9FC7E76F38D5C!s12d4646d292c4ec1a42d56ebded4daee";
-        private const string GRAPH_API_BASE = "https://graph.microsoft.com/v1.0";
+        private const string WORKSHEET_NAME = "Sheet1";
 
-        public SGItineraryService(HttpClient httpClient, IAccessTokenProvider tokenProvider, ILogger<SGItineraryService> logger)
+        public SGItineraryService(ExcelApiService excelApiService, ILogger<SGItineraryService> logger)
         {
-            _httpClient = httpClient;
-            _tokenProvider = tokenProvider;
+            _excelApiService = excelApiService;
             _logger = logger;
-        }
-
-        private async Task<string> GetAccessTokenAsync()
-        {
-            try
-            {
-                var scopes = new[] { "Files.ReadWrite" };
-                var tokenResult = await _tokenProvider.RequestAccessToken(
-                    new AccessTokenRequestOptions
-                    {
-                        Scopes = scopes
-                    });
-
-                if (tokenResult.TryGetToken(out var token))
-                {
-                    _logger.LogInformation("Access token acquired successfully");
-                    return token.Value;
-                }
-
-                if (tokenResult.Status == AccessTokenResultStatus.RequiresRedirect)
-                {
-                    _logger.LogWarning("Authentication redirect required");
-                    var redirectUrl = tokenResult.RedirectUrl;
-                    throw new Exception($"Authentication required. Please navigate to: {redirectUrl}");
-                }
-
-                _logger.LogWarning("Failed to acquire access token");
-                throw new InvalidOperationException("Couldn't acquire an access token");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error acquiring access token");
-                throw;
-            }
         }
 
         public async Task UpdateItineraryInOneDrive(List<ItineraryItem> itinerary)
         {
             try
             {
-                var accessToken = await GetAccessTokenAsync();
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-                var (currentRows, currentColumns) = await GetCurrentRangeUpdate();
+                var (currentRows, currentColumns, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
                 {
@@ -85,38 +44,15 @@ namespace MickeyUtilityWeb.Services
                     item.Location
                 }));
 
+                // Pad the data if necessary
                 while (updateData.Count < currentRows)
                 {
                     updateData.Add(new object[currentColumns]);
                 }
 
-                for (int i = 0; i < updateData.Count; i++)
-                {
-                    if (updateData[i].Length < currentColumns)
-                    {
-                        var paddedRow = new List<object>(updateData[i]);
-                        while (paddedRow.Count < currentColumns)
-                        {
-                            paddedRow.Add(null);
-                        }
-                        updateData[i] = paddedRow.ToArray();
-                    }
-                }
+                string rangeAddress = $"{WORKSHEET_NAME}!A1:G{Math.Max(currentRows, updateData.Count)}";
 
-                var updateRange = new { values = updateData };
-                var json = JsonSerializer.Serialize(updateRange);
-                _logger.LogInformation($"Sending update request with data: {json}");
-
-                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PatchAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/usedRange", content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError($"Error response from API: {errorContent}");
-                    throw new HttpRequestException($"Error updating OneDrive: {errorContent}");
-                }
+                await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
 
                 _logger.LogInformation("Successfully updated itinerary in OneDrive");
             }
@@ -127,28 +63,6 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        private async Task<(int rows, int columns)> GetCurrentRangeUpdate()
-        {
-            var response = await _httpClient.GetAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/usedRange");
-            response.EnsureSuccessStatusCode();
-            var content = await response.Content.ReadFromJsonAsync<GraphRangeResponse>();
-            return (content.Values.Length, content.Values[0].Length);
-        }
-
-        public class GraphRangeResponse
-        {
-            public object[][] Values { get; set; }
-            public string Address { get; set; }
-        }
-
-        private async Task<(int rows, int columns, string address)> GetCurrentRange()
-        {
-            var response = await _httpClient.GetAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/usedRange");
-            response.EnsureSuccessStatusCode();
-            var content = await response.Content.ReadFromJsonAsync<GraphRangeResponse>();
-            return (content.Values.Length, content.Values[0].Length, content.Address);
-        }
-
         public async Task AddItineraryItem(ItineraryItem newItem)
         {
             try
@@ -156,10 +70,7 @@ namespace MickeyUtilityWeb.Services
                 var currentItems = await GetItineraryFromOneDrive();
                 currentItems.Add(newItem);
 
-                var accessToken = await GetAccessTokenAsync();
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-                var (currentRows, currentColumns, rangeAddress) = await GetCurrentRange();
+                var (_, _, rangeAddress) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
                 {
@@ -177,20 +88,9 @@ namespace MickeyUtilityWeb.Services
                     item.Location
                 }));
 
-                string newRangeAddress = $"Sheet1!A1:G{updateData.Count}";
+                string newRangeAddress = $"{WORKSHEET_NAME}!A1:G{updateData.Count}";
 
-                var updateRange = new { values = updateData };
-                var json = JsonSerializer.Serialize(updateRange);
-
-                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PatchAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/range(address='{newRangeAddress}')", content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    throw new HttpRequestException($"Error adding new item to OneDrive: {errorContent}");
-                }
+                await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, newRangeAddress, updateData);
             }
             catch (Exception ex)
             {
@@ -203,19 +103,7 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
-                var accessToken = await GetAccessTokenAsync();
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-                var fileContentResponse = await _httpClient.GetAsync($"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/content");
-
-                if (!fileContentResponse.IsSuccessStatusCode)
-                {
-                    var errorContent = await fileContentResponse.Content.ReadAsStringAsync();
-                    _logger.LogError($"Error response from API: {fileContentResponse.StatusCode} - {errorContent}");
-                    throw new HttpRequestException($"Error response from API: {fileContentResponse.StatusCode} - {errorContent}");
-                }
-
-                var excelContent = await fileContentResponse.Content.ReadAsByteArrayAsync();
+                var excelContent = await _excelApiService.GetFileContent(FILE_ID);
 
                 using (var stream = new MemoryStream(excelContent))
                 using (var package = new ExcelPackage(stream))
@@ -229,7 +117,6 @@ namespace MickeyUtilityWeb.Services
                     for (int row = 2; row <= rowCount; row++)
                     {
                         var timeString = worksheet.Cells[row, 4].Value?.ToString();
-                
 
                         var item = new ItineraryItem
                         {
@@ -257,54 +144,64 @@ namespace MickeyUtilityWeb.Services
                 throw;
             }
         }
-        public async Task DeleteItineraryItem(int rowIndex)
+
+        public async Task DeleteItineraryItem(ItineraryItem itemToDelete)
         {
             try
             {
-                _logger.LogInformation($"Attempting to delete itinerary item at row index {rowIndex}");
+                _logger.LogInformation($"Attempting to delete itinerary item: {itemToDelete.Activity}");
 
-                var accessToken = await GetAccessTokenAsync();
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                var excelContent = await _excelApiService.GetFileContent(FILE_ID);
 
-                var (currentRows, currentColumns, rangeAddress) = await GetCurrentRange();
-                _logger.LogInformation($"Current range: Rows={currentRows}, Columns={currentColumns}, Address={rangeAddress}");
+                int rowToDelete = -1;
 
-                if (rowIndex < 1 || rowIndex >= currentRows)
+                using (var stream = new MemoryStream(excelContent))
+                using (var package = new ExcelPackage(stream))
                 {
-                    _logger.LogError($"Invalid row index: {rowIndex}. Valid range is 1 to {currentRows - 1}");
-                    throw new ArgumentOutOfRangeException(nameof(rowIndex), "Invalid row index");
+                    var worksheet = package.Workbook.Worksheets[0];
+                    var rowCount = worksheet.Dimension.Rows;
+
+                    for (int row = 2; row <= rowCount; row++)
+                    {
+                        if (bool.Parse(worksheet.Cells[row, 1].Value?.ToString() ?? "false") == itemToDelete.IsChecked &&
+                            worksheet.Cells[row, 2].Value?.ToString() == itemToDelete.Day &&
+                            DateTime.Parse(worksheet.Cells[row, 3].Value?.ToString() ?? DateTime.MinValue.ToString()) == itemToDelete.Date &&
+                            worksheet.Cells[row, 4].Value?.ToString() == itemToDelete.TimeString &&
+                            worksheet.Cells[row, 5].Value?.ToString() == itemToDelete.Activity &&
+                            worksheet.Cells[row, 6].Value?.ToString() == itemToDelete.Icon &&
+                            worksheet.Cells[row, 7].Value?.ToString() == itemToDelete.Location)
+                        {
+                            rowToDelete = row;
+                            break;
+                        }
+                    }
+                }
+
+                if (rowToDelete == -1)
+                {
+                    _logger.LogWarning($"Item not found for deletion: {itemToDelete.Activity}");
+                    return;
                 }
 
                 // Delete the specific row
-                var deleteRowRange = $"Sheet1!A{rowIndex}:G{rowIndex}";
+                var deleteRowRange = $"{WORKSHEET_NAME}!A{rowToDelete}:G{rowToDelete}";
                 _logger.LogInformation($"Deleting row range: {deleteRowRange}");
-                var deleteResponse = await _httpClient.PostAsync(
-                    $"{GRAPH_API_BASE}/me/drive/items/{FILE_ID}/workbook/worksheets/Sheet1/range(address='{deleteRowRange}')/delete",
-                    new StringContent("{\"shift\": \"Up\"}", System.Text.Encoding.UTF8, "application/json")
-                );
 
-                if (!deleteResponse.IsSuccessStatusCode)
-                {
-                    var errorContent = await deleteResponse.Content.ReadAsStringAsync();
-                    _logger.LogError($"Error response from OneDrive when deleting row: {errorContent}");
-                    throw new HttpRequestException($"Error deleting row from OneDrive: {errorContent}");
-                }
+                await _excelApiService.DeleteRow(FILE_ID, WORKSHEET_NAME, deleteRowRange);
 
-                _logger.LogInformation($"Successfully deleted item at row index {rowIndex}");
+                _logger.LogInformation($"Successfully deleted item: {itemToDelete.Activity}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error deleting itinerary item at row index {rowIndex}");
+                _logger.LogError(ex, $"Error deleting itinerary item: {itemToDelete.Activity}");
                 throw;
             }
         }
+
         private string FormatTimeString(string timeString)
         {
-
-
             if (string.IsNullOrWhiteSpace(timeString))
             {
-             
                 return string.Empty;
             }
 
@@ -329,7 +226,6 @@ namespace MickeyUtilityWeb.Services
 
         private string FormatSingleTime(string timeString)
         {
-
             if (DateTime.TryParse(timeString, out DateTime parsedDateTime))
             {
                 return parsedDateTime.ToString("HH:mm");
@@ -350,82 +246,6 @@ namespace MickeyUtilityWeb.Services
             }
 
             return timeString; // Return original string if parsing fails
-        }
-
-        private class DateTimeConverter : JsonConverter<DateTime>
-        {
-            public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-            {
-                return DateTime.Parse(reader.GetString());
-            }
-
-            public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
-            {
-                writer.WriteStringValue(value.ToString("yyyy-MM-dd"));
-            }
-        }
-
-        private bool ParseBoolean(JsonElement element)
-        {
-            if (element.ValueKind == JsonValueKind.True || element.ValueKind == JsonValueKind.False)
-            {
-                return element.GetBoolean();
-            }
-            if (element.ValueKind == JsonValueKind.String)
-            {
-                var stringValue = element.GetString();
-                if (bool.TryParse(stringValue, out bool result))
-                {
-                    return result;
-                }
-                return stringValue?.ToLower() is "yes" or "true" or "1";
-            }
-            if (element.ValueKind == JsonValueKind.Number)
-            {
-                return element.GetInt32() != 0;
-            }
-            return false;
-        }
-
-        private DateTime ParseDateTime(JsonElement element)
-        {
-            if (element.ValueKind == JsonValueKind.String)
-            {
-                var stringValue = element.GetString();
-                if (DateTime.TryParse(stringValue, out DateTime result))
-                {
-                    return result;
-                }
-            }
-            else if (element.ValueKind == JsonValueKind.Number)
-            {
-                var daysSince1900 = element.GetDouble();
-                return DateTime.FromOADate(daysSince1900);
-            }
-            return DateTime.MinValue;
-        }
-    }
-
-    public class TimeEntry
-    {
-        public TimeSpan? Start { get; set; }
-        public TimeSpan? End { get; set; }
-
-        public override string ToString()
-        {
-            if (End.HasValue)
-            {
-                return $"{FormatTime(Start)} - {FormatTime(End)}";
-            }
-            else
-            {
-                return FormatTime(Start);
-            }
-        }
-
-        private string FormatTime(TimeSpan? time)
-        {
-            return time?.ToString("hh\\:mm") ?? "";
         }
     }
 }

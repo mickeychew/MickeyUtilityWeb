@@ -31,7 +31,8 @@ builder.Services.AddMsalAuthentication(options =>
 });
 
 builder.Services.AddScoped<SGItineraryService>();
-
+builder.Services.AddScoped<ExcelApiService>();
+builder.Services.AddScoped<PurchaseListService>();
 builder.Services.AddApiAuthorization();
 
 await builder.Build().RunAsync();

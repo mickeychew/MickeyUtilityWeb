@@ -125,5 +125,21 @@ namespace MickeyUtilityWeb.Services
             public object[][] Values { get; set; }
             public string Address { get; set; }
         }
+        public async Task UpdateFileContent(string fileId, byte[] fileContent)
+        {
+            var accessToken = await GetAccessTokenAsync();
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var content = new ByteArrayContent(fileContent);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            var response = await _httpClient.PutAsync($"{GRAPH_API_BASE}/me/drive/items/{fileId}/content", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Error updating Excel file: {errorContent}");
+            }
+        }
     }
 }

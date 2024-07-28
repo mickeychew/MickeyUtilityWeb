@@ -198,7 +198,78 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        private string FormatTimeString(string timeString)
+        public async Task UploadExcel(byte[] fileContent)
+        {
+            try
+            {
+                var newItems = ReadExcelContent(fileContent);
+                await ClearExistingContent();
+                await AddNewItems(newItems);
+                _logger.LogInformation("Successfully uploaded new Excel file content to OneDrive");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading Excel file content to OneDrive");
+                throw;
+            }
+        }
+
+        private List<ItineraryItem> ReadExcelContent(byte[] fileContent)
+        {
+            var items = new List<ItineraryItem>();
+            using (var stream = new MemoryStream(fileContent))
+            using (var package = new ExcelPackage(stream))
+            {
+                var worksheet = package.Workbook.Worksheets[0];
+                var rowCount = worksheet.Dimension.Rows;
+
+                for (int row = 2; row <= rowCount; row++) // Assuming first row is header
+                {
+                    var item = new ItineraryItem
+                    {
+                        IsChecked = bool.Parse(worksheet.Cells[row, 1].Value?.ToString() ?? "false"),
+                        Day = worksheet.Cells[row, 2].Value?.ToString(),
+                        Date = DateTime.Parse(worksheet.Cells[row, 3].Value?.ToString() ?? DateTime.MinValue.ToString()),
+                        TimeString = worksheet.Cells[row, 4].Value?.ToString(),
+                        Activity = worksheet.Cells[row, 5].Value?.ToString(),
+                        Icon = worksheet.Cells[row, 6].Value?.ToString(),
+                        Location = worksheet.Cells[row, 7].Value?.ToString()
+                    };
+                    items.Add(item);
+                }
+            }
+            return items;
+        }
+        private async Task ClearExistingContent()
+        {
+            var (rowCount, _, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
+            if (rowCount > 1) // Keep the header row
+            {
+                var clearRange = $"{WORKSHEET_NAME}!A2:G{rowCount}";
+                var clearData = Enumerable.Repeat(new object[7], rowCount - 1).ToList();
+                await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, clearRange, clearData);
+            }
+        }
+
+        private async Task AddNewItems(List<ItineraryItem> items)
+        {
+            var updateData = items.Select(item => new object[]
+            {
+                item.IsChecked,
+                item.Day,
+                item.Date.ToString("yyyy-MM-dd"),
+                item.TimeString,
+                item.Activity,
+                item.Icon ?? "",
+                item.Location
+            }).ToList();
+
+            var rangeAddress = $"{WORKSHEET_NAME}!A2:G{updateData.Count + 1}";
+            await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
+        }
+    
+
+    private string FormatTimeString(string timeString)
         {
             if (string.IsNullOrWhiteSpace(timeString))
             {

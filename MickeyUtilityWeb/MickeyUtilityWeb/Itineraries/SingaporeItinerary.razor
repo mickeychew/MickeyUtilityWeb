@@ -3,69 +3,99 @@
 @using MickeyUtilityWeb.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.AspNetCore.Components.Forms
 @inject SGItineraryService ItineraryService
+@inject ExcelApiService ExcelApiService
 @inject NavigationManager NavigationManager
 @inject IAccessTokenProvider TokenProvider
+@inject IJSRuntime JSRuntime
+
+<link href="css/Itinerary/SGItineraryEdit.css" rel="stylesheet" />
 
 <AuthorizeView>
     <Authorized>
-        <h3>Singapore Itinerary</h3>
-        @if (isLoading)
-        {
-            <p>Loading...</p>
-        }
-        else if (errorMessage != null)
-        {
-            <div class="alert alert-danger">
-                @errorMessage
-                <button class="btn btn-primary" @onclick="TryAgain">Try Again</button>
-            </div>
-        }
-        else
-        {
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Day</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Activity</th>
-                        <th>Location</th>
-                        <th>Completed</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in itineraryItems)
-                    {
+        <div class="sg-itinerary-container">
+            <h1 class="sg-itinerary-title">Singapore Itinerary</h1>
+
+            @if (isLoading)
+            {
+                <div class="sg-itinerary-loading">
+                    <div class="sg-itinerary-spinner"></div>
+                </div>
+            }
+            else if (errorMessage != null)
+            {
+                <div class="sg-itinerary-error">
+                    @errorMessage
+                    <button class="sg-itinerary-btn sg-itinerary-btn-danger" @onclick="TryAgain">Try Again</button>
+                </div>
+            }
+            else
+            {
+                <div class="sg-itinerary-file-upload">
+                    <InputFile OnChange="@HandleFileUpload" accept=".xlsx" />
+                    <button class="sg-itinerary-btn sg-itinerary-btn-primary" @onclick="UploadExcel" disabled="@(!isFileSelected)">
+                        Upload Excel
+                    </button>
+                </div>
+
+                <table class="sg-itinerary-table">
+                    <thead>
                         <tr>
-                            <td><input @bind="item.Day" /></td>
-                            <td><input type="date" @bind="item.Date" @bind:format="yyyy-MM-dd" /></td>
-                            <td><input @bind="item.TimeString" /></td>
-                            <td><input @bind="item.Activity" /></td>
-                            <td><input @bind="item.Location" /></td>
-                            <td><input type="checkbox" @bind="item.IsChecked" /></td>
+                            <th>Day</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Activity</th>
+                            <th>Location</th>
+                            <th>Completed</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in itineraryItems)
+                        {
+                            <tr>
+                                <td><input class="sg-itinerary-form-control" @bind="item.Day" /></td>
+                                <td><input class="sg-itinerary-form-control" type="date" @bind="item.Date" @bind:format="yyyy-MM-dd" /></td>
+                                <td><input class="sg-itinerary-form-control" @bind="item.TimeString" /></td>
+                                <td><input class="sg-itinerary-form-control" @bind="item.Activity" /></td>
+                                <td><input class="sg-itinerary-form-control" @bind="item.Location" /></td>
+                                <td>
+                                    <div class="sg-itinerary-form-check">
+                                        <input class="sg-itinerary-form-check-input" type="checkbox" @bind="item.IsChecked" id="@($"flexSwitchCheck{item.Day}")" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <button class="sg-itinerary-btn sg-itinerary-btn-danger" @onclick="() => DeleteItem(item)">Delete</button>
+                                </td>
+                            </tr>
+                        }
+                        <tr>
+                            <td><input class="sg-itinerary-form-control" @bind="newItem.Day" placeholder="Day" /></td>
+                            <td><input class="sg-itinerary-form-control" type="date" @bind="newItem.Date" @bind:format="yyyy-MM-dd" /></td>
+                            <td><input class="sg-itinerary-form-control" @bind="newItem.TimeString" placeholder="Time" /></td>
+                            <td><input class="sg-itinerary-form-control" @bind="newItem.Activity" placeholder="Activity" /></td>
+                            <td><input class="sg-itinerary-form-control" @bind="newItem.Location" placeholder="Location" /></td>
                             <td>
-                                <button class="btn btn-danger" @onclick="() => DeleteItem(item)">Delete</button>
+                                <div class="sg-itinerary-form-check">
+                                    <input class="sg-itinerary-form-check-input" type="checkbox" @bind="newItem.IsChecked" id="flexSwitchCheckNew" />
+                                </div>
+                            </td>
+                            <td>
+                                <button class="sg-itinerary-btn sg-itinerary-btn-success" @onclick="AddNewItem">Add</button>
                             </td>
                         </tr>
-                    }
-                    <tr>
-                        <td><input @bind="newItem.Day" placeholder="Day" /></td>
-                        <td><input type="date" @bind="newItem.Date" @bind:format="yyyy-MM-dd" /></td>
-                        <td><input @bind="newItem.TimeString" placeholder="Time" /></td>
-                        <td><input @bind="newItem.Activity" placeholder="Activity" /></td>
-                        <td><input @bind="newItem.Location" placeholder="Location" /></td>
-                        <td><input type="checkbox" @bind="newItem.IsChecked" /></td>
-                        <td><button class="btn btn-success" @onclick="AddNewItem">Add</button></td>
-                    </tr>
-                </tbody>
-            </table>
-            <button @onclick="SaveChanges" class="btn btn-primary">Save Changes</button>
-        }
+                    </tbody>
+                </table>
+
+                <button @onclick="SaveChanges" class="sg-itinerary-btn sg-itinerary-btn-primary">Save Changes</button>
+            }
+        </div>
     </Authorized>
     <NotAuthorized>
-        <p>You need to log in to access the itinerary.</p>
+        <div class="sg-itinerary-error">
+            You need to log in to access the itinerary.
+        </div>
     </NotAuthorized>
 </AuthorizeView>
 
@@ -74,6 +104,8 @@
     private ItineraryItem newItem = new ItineraryItem { Date = DateTime.Today };
     private bool isLoading = true;
     private string errorMessage;
+    private IBrowserFile uploadedFile;
+    private bool isFileSelected = false;
 
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; }
@@ -119,6 +151,7 @@
         {
             await ItineraryService.UpdateItineraryInOneDrive(itineraryItems);
             errorMessage = null;
+            await JSRuntime.InvokeVoidAsync("alert", "Changes saved successfully!");
         }
         catch (Exception ex)
         {
@@ -146,6 +179,7 @@
             newItem = new ItineraryItem { Date = DateTime.Today };
             errorMessage = null;
             await SaveChanges();
+            await JSRuntime.InvokeVoidAsync("alert", "New item added successfully!");
         }
         catch (Exception ex)
         {
@@ -160,10 +194,49 @@
             await ItineraryService.DeleteItineraryItem(item);
             itineraryItems.Remove(item);
             errorMessage = null;
+            await JSRuntime.InvokeVoidAsync("alert", "Item deleted successfully!");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error deleting item: {ex.Message}";
+        }
+    }
+
+    private void HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        uploadedFile = e.File;
+        isFileSelected = true;
+    }
+
+    private async Task UploadExcel()
+    {
+        if (uploadedFile == null)
+        {
+            errorMessage = "Please select a file to upload.";
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            var fileContent = new byte[uploadedFile.Size];
+            await uploadedFile.OpenReadStream().ReadAsync(fileContent);
+
+            await ItineraryService.UploadExcel(fileContent);
+
+            await LoadItinerary();
+
+            await JSRuntime.InvokeVoidAsync("alert", "Excel file content uploaded and itinerary updated successfully!");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error uploading Excel file content: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            isFileSelected = false;
+            uploadedFile = null;
         }
     }
 }

@@ -1,0 +1,121 @@
+﻿.sg-itinerary-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.sg-itinerary-title {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.sg-itinerary-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+}
+
+.sg-itinerary-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: sg-itinerary-spin 1s linear infinite;
+}
+
+@keyframes sg-itinerary-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.sg-itinerary-error {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.sg-itinerary-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.sg-itinerary-btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.sg-itinerary-btn-danger {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.sg-itinerary-btn-success {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.sg-itinerary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+    .sg-itinerary-table th,
+    .sg-itinerary-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .sg-itinerary-table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+
+    .sg-itinerary-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .sg-itinerary-table tr:hover {
+        background-color: #f5f5f5;
+    }
+
+.sg-itinerary-form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.sg-itinerary-form-check {
+    display: flex;
+    align-items: center;
+}
+
+.sg-itinerary-form-check-input {
+    margin-right: 8px;
+}
+
+.sg-itinerary-file-upload {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+    .sg-itinerary-file-upload input[type="file"] {
+        flex: 1;
+        margin-right: 10px;
+    }

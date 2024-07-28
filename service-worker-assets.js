@@ -21,11 +21,15 @@
       "url": "css\/Itinerary\/Itinerary.css"
     },
     {
+      "hash": "sha256-cvOKZZatj0QxdAPqe6Lzmb1P97MeTjgDEP6DIXfpkHU=",
+      "url": "css\/Itinerary\/PurchaseList.css"
+    },
+    {
       "hash": "sha256-FF\/8jKUpjeWvM2SHnofdgTnPUSUn3abvhl+jBOnYzok=",
       "url": "css\/Itinerary\/SGItineraryEdit.css"
     },
     {
-      "hash": "sha256-8TBqMe8daNWZzT956vdKJJiE1E9lXShRp26KGQFb10s=",
+      "hash": "sha256-cvOKZZatj0QxdAPqe6Lzmb1P97MeTjgDEP6DIXfpkHU=",
       "url": "css\/PurchaseList\/PurchaseList.css"
     },
     {
@@ -85,7 +89,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-xGVdyEUQH35pAeNpRu7YmcNIbvmEaN1Z3oMaCED2If8=",
+      "hash": "sha256-N8UIVRparda8P18Dg4VYUs5kbV0Tx2EaGl4FX09neBk=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -101,7 +105,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-feLAExdl0\/ZR+dVXoVTlecGZWblQThwrv8uABYVFEvY=",
+      "hash": "sha256-6VZOTyH9CfM1cIejYZeua66OrEMyfczXIe4nhJvQPiQ=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -301,7 +305,7 @@
       "url": "_framework\/System.ObjectModel.wasm"
     },
     {
-      "hash": "sha256-9JY6wOESobEmx+okCcsC4ZCE+1vj8lUQQHJ79gmIiRM=",
+      "hash": "sha256-GApipoBzmYczRNPlE\/rW1lEDbAZ0GRgwmfOGIeF608w=",
       "url": "_framework\/System.Private.CoreLib.wasm"
     },
     {
@@ -401,5 +405,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "PxCibxib"
+  "version": "Jrd3skzi"
 };

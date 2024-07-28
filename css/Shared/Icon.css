@@ -1,0 +1,80 @@
+﻿/* Icon styles */
+.itinerary-icon-plane::before {
+    content: '✈️';
+}
+
+.itinerary-icon-hotel::before {
+    content: '🏨';
+}
+
+.itinerary-icon-utensils::before {
+    content: '🍴';
+}
+
+.itinerary-icon-coffee::before {
+    content: '☕';
+}
+
+.itinerary-icon-camera::before {
+    content: '📷';
+}
+
+.itinerary-icon-hiking::before {
+    content: '🥾';
+}
+
+.itinerary-icon-beach::before {
+    content: '🏖️';
+}
+
+.itinerary-icon-museum::before {
+    content: '🏛️';
+}
+
+.itinerary-icon-shopping-cart::before {
+    content: '🛒';
+}
+
+.itinerary-icon-train::before {
+    content: '🚆';
+}
+
+.itinerary-icon-bus::before {
+    content: '🚌';
+}
+
+.itinerary-icon-taxi::before {
+    content: '🚕';
+}
+
+.itinerary-icon-bicycle::before {
+    content: '🚲';
+}
+
+.itinerary-icon-landmark::before {
+    content: '🗽';
+}
+
+.itinerary-icon-ticket::before {
+    content: '🎟️';
+}
+
+.itinerary-icon-bed::before {
+    content: '🛏️';
+}
+
+.itinerary-icon-sunrise::before {
+    content: '🌅';
+}
+
+.itinerary-icon-sunset::before {
+    content: '🌇';
+}
+
+.itinerary-icon-cocktail::before {
+    content: '🍹';
+}
+
+.itinerary-icon-suitcase::before {
+    content: '🧳';
+}

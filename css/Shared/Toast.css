@@ -1,0 +1,45 @@
+﻿:root {
+    --toast-primary-color: #3498db;
+    --toast-secondary-color: #2ecc71;
+    --toast-accent-color: #e74c3c;
+}
+
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    color: white;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 1000;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+    .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .toast.info {
+        background-color: var(--toast-primary-color);
+    }
+
+    .toast.error {
+        background-color: var(--toast-accent-color);
+    }
+
+    .toast.success {
+        background-color: var(--toast-secondary-color);
+    }
+
+@media (max-width: 480px) {
+    .toast {
+        left: 20px;
+        right: 20px;
+        max-width: calc(100% - 40px);
+    }
+}

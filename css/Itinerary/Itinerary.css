@@ -140,34 +140,8 @@
     color: #666;
 }
 
-/* Icon styles */
-.itinerary-icon-home::before {
-    content: '🏠';
-}
 
-.itinerary-icon-plane::before {
-    content: '✈️';
-}
 
-.itinerary-icon-utensils::before {
-    content: '🍴';
-}
-
-.itinerary-icon-hotel::before {
-    content: '🏨';
-}
-
-.itinerary-icon-coffee::before {
-    content: '☕';
-}
-
-.itinerary-icon-camera::before {
-    content: '📷';
-}
-
-.itinerary-icon-sun::before {
-    content: '☀️';
-}
 
 /* Responsive design */
 @media (max-width: 600px) {

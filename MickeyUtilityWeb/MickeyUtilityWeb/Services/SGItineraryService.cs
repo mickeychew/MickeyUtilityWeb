@@ -202,7 +202,9 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
+                _logger.LogInformation("Starting Excel upload process");
                 var newItems = ReadExcelContent(fileContent);
+                _logger.LogInformation($"Read {newItems.Count} items from uploaded Excel file");
                 await ClearExistingContent();
                 await AddNewItems(newItems);
                 _logger.LogInformation("Successfully uploaded new Excel file content to OneDrive");
@@ -225,20 +227,74 @@ namespace MickeyUtilityWeb.Services
 
                 for (int row = 2; row <= rowCount; row++) // Assuming first row is header
                 {
-                    var item = new ItineraryItem
+                    try
                     {
-                        IsChecked = bool.Parse(worksheet.Cells[row, 1].Value?.ToString() ?? "false"),
-                        Day = worksheet.Cells[row, 2].Value?.ToString(),
-                        Date = DateTime.Parse(worksheet.Cells[row, 3].Value?.ToString() ?? DateTime.MinValue.ToString()),
-                        TimeString = worksheet.Cells[row, 4].Value?.ToString(),
-                        Activity = worksheet.Cells[row, 5].Value?.ToString(),
-                        Icon = worksheet.Cells[row, 6].Value?.ToString(),
-                        Location = worksheet.Cells[row, 7].Value?.ToString()
-                    };
-                    items.Add(item);
+                        var timeString = worksheet.Cells[row, 4].Value?.ToString();
+                        _logger.LogInformation($"Reading row {row}, Time value: '{timeString}'");
+
+                        var item = new ItineraryItem
+                        {
+                            IsChecked = bool.Parse(worksheet.Cells[row, 1].Value?.ToString() ?? "false"),
+                            Day = worksheet.Cells[row, 2].Value?.ToString(),
+                            Date = ParseExcelDate(worksheet.Cells[row, 3].Value),
+                            TimeString = ParseExcelTime(timeString),
+                            Activity = worksheet.Cells[row, 5].Value?.ToString(),
+                            Icon = worksheet.Cells[row, 6].Value?.ToString(),
+                            Location = worksheet.Cells[row, 7].Value?.ToString()
+                        };
+
+                        _logger.LogInformation($"Parsed item: Day={item.Day}, Date={item.Date}, Time={item.TimeString}");
+                        items.Add(item);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"Error parsing row {row}");
+                    }
                 }
             }
             return items;
+        }
+
+        private DateTime ParseExcelDate(object cellValue)
+        {
+            if (cellValue == null)
+                return DateTime.MinValue;
+
+            if (cellValue is DateTime dateTime)
+                return dateTime;
+
+            if (double.TryParse(cellValue.ToString(), out double excelDate))
+                return DateTime.FromOADate(excelDate);
+
+            if (DateTime.TryParse(cellValue.ToString(), out DateTime parsedDate))
+                return parsedDate;
+
+            _logger.LogWarning($"Unable to parse date: {cellValue}");
+            return DateTime.MinValue;
+        }
+
+        private string ParseExcelTime(string timeString)
+        {
+            if (string.IsNullOrWhiteSpace(timeString))
+                return string.Empty;
+
+            _logger.LogInformation($"Parsing time: '{timeString}'");
+
+            // Try parsing as a time range (e.g., "11:45 - 13:00")
+            var timeParts = timeString.Split('-').Select(t => t.Trim()).ToArray();
+            if (timeParts.Length == 2)
+            {
+                var start = FormatSingleTime(timeParts[0]);
+                var end = FormatSingleTime(timeParts[1]);
+                var result = $"{start} - {end}";
+                _logger.LogInformation($"Parsed time range: '{result}'");
+                return result;
+            }
+
+            // Try parsing as a single time
+            var formattedTime = FormatSingleTime(timeString);
+            _logger.LogInformation($"Parsed single time: '{formattedTime}'");
+            return formattedTime;
         }
         private async Task ClearExistingContent()
         {
@@ -297,26 +353,21 @@ namespace MickeyUtilityWeb.Services
 
         private string FormatSingleTime(string timeString)
         {
-            if (DateTime.TryParse(timeString, out DateTime parsedDateTime))
-            {
-                return parsedDateTime.ToString("HH:mm");
-            }
+            // Try parsing as DateTime
+            if (DateTime.TryParse(timeString, out DateTime dateTime))
+                return dateTime.ToString("HH:mm");
 
-            if (DateTime.TryParseExact(timeString, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedTime))
-            {
+            // Try parsing specific formats
+            string[] formats = { "H:mm", "HH:mm", "h:mm tt", "hh:mm tt" };
+            if (DateTime.TryParseExact(timeString, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedTime))
                 return parsedTime.ToString("HH:mm");
-            }
-            else if (DateTime.TryParseExact(timeString, "h:mm tt", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedTime))
-            {
-                return parsedTime.ToString("HH:mm");
-            }
-            else if (double.TryParse(timeString, out double excelTime))
-            {
-                var convertedTime = DateTime.FromOADate(excelTime).ToString("HH:mm");
-                return convertedTime;
-            }
 
-            return timeString; // Return original string if parsing fails
+            // Try parsing as Excel time (decimal fraction of a day)
+            if (double.TryParse(timeString, out double excelTime))
+                return DateTime.FromOADate(excelTime).ToString("HH:mm");
+
+            _logger.LogWarning($"Unable to parse time: {timeString}");
+            return timeString; // Return original if parsing fails
         }
     }
 }

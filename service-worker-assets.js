@@ -29,7 +29,7 @@
       "url": "css\/Itinerary\/SGItineraryEdit.css"
     },
     {
-      "hash": "sha256-cvOKZZatj0QxdAPqe6Lzmb1P97MeTjgDEP6DIXfpkHU=",
+      "hash": "sha256-+szKEBwt27b3wm7QPlYo01Khc5fC5z3v0XTDFfJ7tJk=",
       "url": "css\/PurchaseList\/PurchaseList.css"
     },
     {
@@ -97,7 +97,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-hq4qMwzbuMzCflzL4ykwrQvqHKvLnKOlp7fBKhQnIzI=",
+      "hash": "sha256-55ZNFRKDVZtPGU3NVGVraUSlzvNzkGdwZSAL8YRjgeU=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -113,7 +113,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-hK44sig2MMajxev2YvFqbPj7OBXJYlOQRf9RGvUVuCw=",
+      "hash": "sha256-MgHyHT9cGFUkPa9cjH\/LQFy5zUaTIdfAZHNNIeypwSI=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -413,5 +413,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "XsTpBIv4"
+  "version": "+uU1boGL"
 };

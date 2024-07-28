@@ -1,6 +1,7 @@
 ﻿@page "/sgitinerary"
 @using MickeyUtilityWeb.Models
 @using MickeyUtilityWeb.Services
+@using MickeyUtilityWeb.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using Microsoft.AspNetCore.Components.Forms
@@ -11,6 +12,10 @@
 @inject IJSRuntime JSRuntime
 
 <link href="css/Itinerary/SGItineraryEdit.css" rel="stylesheet" />
+<link href="css/Shared/Toast.css" rel="stylesheet" />
+<link href="css/Shared/Icon.css" rel="stylesheet" />
+
+<Toast @ref="toastComponent" />
 
 <AuthorizeView>
     <Authorized>
@@ -46,6 +51,7 @@
                             <th>Date</th>
                             <th>Time</th>
                             <th>Activity</th>
+                            <th>Icon</th>
                             <th>Location</th>
                             <th>Completed</th>
                             <th>Actions</th>
@@ -59,6 +65,16 @@
                                 <td><input class="sg-itinerary-form-control" type="date" @bind="item.Date" @bind:format="yyyy-MM-dd" /></td>
                                 <td><input class="sg-itinerary-form-control" @bind="item.TimeString" /></td>
                                 <td><input class="sg-itinerary-form-control" @bind="item.Activity" /></td>
+                                <td>
+                                    <select @bind="item.Icon" class="sg-itinerary-form-control">
+                                        @foreach (var icon in icons)
+                                        {
+                                            <option value="@icon.Key">
+                                                <span class="@($"itinerary-icon-{icon.Key}")"></span> @icon.Value
+                                            </option>
+                                        }
+                                    </select>
+                                </td>
                                 <td><input class="sg-itinerary-form-control" @bind="item.Location" /></td>
                                 <td>
                                     <div class="sg-itinerary-form-check">
@@ -75,6 +91,16 @@
                             <td><input class="sg-itinerary-form-control" type="date" @bind="newItem.Date" @bind:format="yyyy-MM-dd" /></td>
                             <td><input class="sg-itinerary-form-control" @bind="newItem.TimeString" placeholder="Time" /></td>
                             <td><input class="sg-itinerary-form-control" @bind="newItem.Activity" placeholder="Activity" /></td>
+                            <td>
+                                <select @bind="newItem.Icon" class="sg-itinerary-form-control">
+                                    @foreach (var icon in icons)
+                                    {
+                                        <option value="@icon.Key">
+                                            <span class="@($"itinerary-icon-{icon.Key}")"></span> @icon.Value
+                                        </option>
+                                    }
+                                </select>
+                            </td>
                             <td><input class="sg-itinerary-form-control" @bind="newItem.Location" placeholder="Location" /></td>
                             <td>
                                 <div class="sg-itinerary-form-check">
@@ -106,6 +132,31 @@
     private string errorMessage;
     private IBrowserFile uploadedFile;
     private bool isFileSelected = false;
+    private Toast toastComponent;
+
+    private Dictionary<string, string> icons = new Dictionary<string, string>
+    {
+        {"plane", "Flight"},
+        {"hotel", "Hotel"},
+        {"utensils", "Restaurant"},
+        {"coffee", "Cafe"},
+        {"camera", "Sightseeing"},
+        {"hiking", "Hiking"},
+        {"beach", "Beach"},
+        {"museum", "Museum"},
+        {"shopping-cart", "Shopping"},
+        {"train", "Train"},
+        {"bus", "Bus"},
+        {"taxi", "Taxi"},
+        {"bicycle", "Cycling"},
+        {"landmark", "Landmark"},
+        {"ticket", "Event"},
+        {"bed", "Rest"},
+        {"sunrise", "Morning Activity"},
+        {"sunset", "Evening Activity"},
+        {"cocktail", "Nightlife"},
+        {"suitcase", "Packing"}
+    };
 
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; }
@@ -151,11 +202,12 @@
         {
             await ItineraryService.UpdateItineraryInOneDrive(itineraryItems);
             errorMessage = null;
-            await JSRuntime.InvokeVoidAsync("alert", "Changes saved successfully!");
+            await toastComponent.ShowToast("Changes saved successfully!", "success");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error saving changes: {ex.Message}";
+            await toastComponent.ShowToast($"Error saving changes: {ex.Message}", "error");
         }
     }
 
@@ -169,6 +221,7 @@
         if (string.IsNullOrWhiteSpace(newItem.Day) || string.IsNullOrWhiteSpace(newItem.Activity))
         {
             errorMessage = "Day and Activity are required fields.";
+            await toastComponent.ShowToast("Day and Activity are required fields.", "warning");
             return;
         }
 
@@ -179,11 +232,12 @@
             newItem = new ItineraryItem { Date = DateTime.Today };
             errorMessage = null;
             await SaveChanges();
-            await JSRuntime.InvokeVoidAsync("alert", "New item added successfully!");
+            await toastComponent.ShowToast("New item added successfully!", "success");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error adding new item: {ex.Message}";
+            await toastComponent.ShowToast($"Error adding new item: {ex.Message}", "error");
         }
     }
 
@@ -194,11 +248,12 @@
             await ItineraryService.DeleteItineraryItem(item);
             itineraryItems.Remove(item);
             errorMessage = null;
-            await JSRuntime.InvokeVoidAsync("alert", "Item deleted successfully!");
+            await toastComponent.ShowToast("Item deleted successfully!", "success");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error deleting item: {ex.Message}";
+            await toastComponent.ShowToast($"Error deleting item: {ex.Message}", "error");
         }
     }
 
@@ -213,6 +268,7 @@
         if (uploadedFile == null)
         {
             errorMessage = "Please select a file to upload.";
+            await toastComponent.ShowToast("Please select a file to upload.", "warning");
             return;
         }
 
@@ -226,11 +282,12 @@
 
             await LoadItinerary();
 
-            await JSRuntime.InvokeVoidAsync("alert", "Excel file content uploaded and itinerary updated successfully!");
+            await toastComponent.ShowToast("Excel file content uploaded and itinerary updated successfully!", "success");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error uploading Excel file content: {ex.Message}";
+            await toastComponent.ShowToast($"Error uploading Excel file content: {ex.Message}", "error");
         }
         finally
         {

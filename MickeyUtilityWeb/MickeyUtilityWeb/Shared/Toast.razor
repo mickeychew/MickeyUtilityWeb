@@ -1,0 +1,24 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="toast @toastClass @(isVisible ? "show" : "")">
+    @message
+</div>
+
+@code {
+    private string message = "";
+    private string toastClass = "";
+    private bool isVisible = false;
+
+    public async Task ShowToast(string msg, string type, int duration = 3000)
+    {
+        message = msg;
+        toastClass = type;
+        isVisible = true;
+        StateHasChanged();
+
+        await Task.Delay(duration);
+
+        isVisible = false;
+        StateHasChanged();
+    }
+}

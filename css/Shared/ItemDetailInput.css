@@ -1,0 +1,55 @@
+﻿/* ItemDetailInput.css */
+.item-detail-input {
+    margin-bottom: 15px;
+}
+
+.item-detail-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.item-detail-value {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+    .item-detail-value:hover {
+        border-color: var(--primary-color);
+        background-color: var(--background-color);
+    }
+
+.item-detail-edit {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+    .item-detail-edit:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+    }
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .item-detail-label {
+        font-size: 0.8rem;
+    }
+
+    .item-detail-value,
+    .item-detail-edit {
+        font-size: 13px;
+        padding: 6px;
+    }
+}

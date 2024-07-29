@@ -21,20 +21,20 @@
       "url": "css\/Itinerary\/Itinerary.css"
     },
     {
-      "hash": "sha256-cvOKZZatj0QxdAPqe6Lzmb1P97MeTjgDEP6DIXfpkHU=",
-      "url": "css\/Itinerary\/PurchaseList.css"
-    },
-    {
       "hash": "sha256-cVHFgbQnKOLoVn27oa0I1KIPsygQ0AKmWQSV8uKBCKE=",
       "url": "css\/Itinerary\/SGItineraryEdit.css"
     },
     {
-      "hash": "sha256-+szKEBwt27b3wm7QPlYo01Khc5fC5z3v0XTDFfJ7tJk=",
+      "hash": "sha256-AZDYHDk\/VbSedcivr77a6g+YmzEyEa9TB6s+HnlZy\/Y=",
       "url": "css\/PurchaseList\/PurchaseList.css"
     },
     {
       "hash": "sha256-ISORgioifukGR3Ce6hsuG\/whcJmjXFH75dJCFXdX9AM=",
       "url": "css\/Shared\/Icon.css"
+    },
+    {
+      "hash": "sha256-S5EXi+ONU7vldworPkATtdEpmZbutbZEpbWWlwk\/Epc=",
+      "url": "css\/Shared\/ItemDetailInput.css"
     },
     {
       "hash": "sha256-waINLfsoIZtWjtTM++ZUci\/4iYmAWVdDtwXWpZ\/oPJM=",
@@ -97,7 +97,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-55ZNFRKDVZtPGU3NVGVraUSlzvNzkGdwZSAL8YRjgeU=",
+      "hash": "sha256-0MSUTI1yP9naeH+mhoK\/Z6DV1qqS\/zZSBPiwmnxg46E=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -113,7 +113,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-MgHyHT9cGFUkPa9cjH\/LQFy5zUaTIdfAZHNNIeypwSI=",
+      "hash": "sha256-F+Slbc2sZRiNcfqjoHIrpsTtibFcFxqzfu\/crF6eJV0=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -125,11 +125,11 @@
       "url": "_framework\/Microsoft.AspNetCore.Components.Authorization.wasm"
     },
     {
-      "hash": "sha256-bz6R2oTEFqF8Wqb5zWAlWSj5+sBifDmnPDxRAL6dIKA=",
+      "hash": "sha256-+ysAh1GjmqsQ0S5YvV\/H6cRpzYRqNSAILQqdDXyGntQ=",
       "url": "_framework\/Microsoft.AspNetCore.Components.wasm"
     },
     {
-      "hash": "sha256-CPwHMhyOu6VF632CGLvCkALWPZpWBCtC\/Y5tyW84Y7E=",
+      "hash": "sha256-GCRikclvLxTh\/jcPIK3kU0ZyJZDtgCRf469V1pAwNDs=",
       "url": "_framework\/Microsoft.AspNetCore.Components.Web.wasm"
     },
     {
@@ -313,7 +313,7 @@
       "url": "_framework\/System.ObjectModel.wasm"
     },
     {
-      "hash": "sha256-Jao2r2+JKuBnH+2a0tAhn\/hwRoxNKMEpvzY6Ld1Qhd8=",
+      "hash": "sha256-9cF\/f9pStUHX4vbpTuLcQiiWlsbpvr7\/97JRoqGD1m0=",
       "url": "_framework\/System.Private.CoreLib.wasm"
     },
     {
@@ -413,5 +413,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "+uU1boGL"
+  "version": "vYgENBPk"
 };

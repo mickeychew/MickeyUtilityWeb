@@ -1,0 +1,292 @@
+﻿@page "/todolist"
+@using MickeyUtilityWeb.Services
+@using MickeyUtilityWeb.Models
+@using MickeyUtilityWeb.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject TodoListService TodoListService
+@inject NavigationManager NavigationManager
+@inject IAccessTokenProvider TokenProvider
+@inject IJSRuntime JSRuntime
+
+<link href="css/Todo/TodoList.css" rel="stylesheet" />
+<link href="css/Shared/Toast.css" rel="stylesheet" />
+@* <img src="images/JellyPanda.jpg" alt="Cute Panda" class="panda-background" /> *@
+
+<div class="todo-container">
+    <AuthorizeView>
+        <Authorized>
+            <div class="todo-header">
+                <h1 class="todo-title">To-Do List</h1>
+                <div class="flip-clock">
+                    <div class="flip-clock-item">@DateTime.Now.ToString("HH")</div>
+                    <div class="flip-clock-item">@DateTime.Now.ToString("mm")</div>
+                </div>
+            </div>
+
+            <div class="todo-categories">
+                <button class="todo-category-btn @(currentFilter == "all" ? "active" : "")" @onclick="@(() => FilterTasks("all"))">All</button>
+                <button class="todo-category-btn @(currentFilter == "completed" ? "active" : "")" @onclick="@(() => FilterTasks("completed"))">Completed</button>
+                <button class="todo-category-btn @(currentFilter == "incomplete" ? "active" : "")" @onclick="@(() => FilterTasks("incomplete"))">Incomplete</button>
+            </div>
+
+            <div class="weekend-countdown">
+                <h3>Weekend Countdown</h3>
+                <p>@GetWeekendCountdown()</p>
+            </div>
+
+            <div class="progress-bars">
+                <div class="progress-item">
+                    <span>Year: @GetYearProgress()%</span>
+                    <div class="progress-bar" style="width: @GetYearProgress()%"></div>
+                </div>
+                <div class="progress-item">
+                    <span>Month: @GetMonthProgress()%</span>
+                    <div class="progress-bar" style="width: @GetMonthProgress()%"></div>
+                </div>
+                <div class="progress-item">
+                    <span>Week: @GetWeekProgress()%</span>
+                    <div class="progress-bar" style="width: @GetWeekProgress()%"></div>
+                </div>
+                <div class="progress-item">
+                    <span>Day: @GetDayProgress()%</span>
+                    <div class="progress-bar" style="width: @GetDayProgress()%"></div>
+                </div>
+            </div>
+
+            @if (isLoading)
+            {
+                <div class="loading-spinner"></div>
+            }
+            else if (errorMessage != null)
+            {
+                <div class="alert-danger">
+                    <p>@errorMessage</p>
+                    <button class="btn btn-primary" @onclick="TryAgain">Try Again</button>
+                </div>
+            }
+            else
+            {
+                <div class="todo-form">
+                    <input type="text" class="todo-input-small" placeholder="Add a new task..." @bind="newItem.Task" @bind:event="oninput" />
+                    <input type="date" class="todo-input-small" @bind="newItem.DueDate" />
+                    <button class="todo-add-btn" @onclick="AddNewItem">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                </div>
+
+                <ul class="todo-list">
+                    @foreach (var item in FilteredTodoItems)
+                    {
+                        <li class="todo-item @(item.IsCompleted ? "completed" : "")">
+                            @if (editingItem == item)
+                            {
+                                <div class="todo-edit-form">
+                                    <input type="text" class="todo-edit-input" @bind="item.Task" />
+                                    <input type="date" class="todo-edit-date" @bind="item.DueDate" />
+                                    <div class="todo-edit-actions">
+                                        <button class="todo-edit-save" @onclick="@(() => SaveEdit(item))">Save</button>
+                                        <button class="todo-edit-cancel" @onclick="CancelEdit">Cancel</button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <input type="checkbox" class="todo-checkbox" checked="@item.IsCompleted" @onchange="@(() => ToggleCompleted(item))" />
+                                <div class="todo-content">
+                                    <span class="todo-text">@item.Task</span>
+                                    <span class="todo-date">@(item.DueDate?.ToString("MMM dd, yyyy"))</span>
+                                </div>
+                                <div class="todo-actions">
+                                    <button class="todo-edit-btn" @onclick="@(() => StartEdit(item))">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                            <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </button>
+                                    <button class="todo-delete-btn" @onclick="@(() => RemoveItem(item))">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M3 6H5H21M19 6V20C19 21.1046 18.1046 22 17 22H7C5.89543 22 5 21.1046 5 20V6M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </Authorized>
+        <NotAuthorized>
+            <p class="unauthorized-message">You need to log in to access the todo list.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+<Toast @ref="toast" />
+
+@code {
+    private List<TodoItem> todoItems = new List<TodoItem>();
+    private TodoItem newItem = new TodoItem { DueDate = DateTime.Today.AddDays(1) };
+    private bool isLoading = true;
+    private string errorMessage;
+    private Toast toast;
+    private TodoItem editingItem;
+    private string currentFilter = "all";
+
+    private IEnumerable<TodoItem> FilteredTodoItems => currentFilter switch
+    {
+        "completed" => todoItems.Where(item => item.IsCompleted),
+        "incomplete" => todoItems.Where(item => !item.IsCompleted),
+        _ => todoItems
+    };
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        if (authState.User.Identity.IsAuthenticated)
+        {
+            await LoadTodoList();
+        }
+    }
+
+    private async Task LoadTodoList()
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            todoItems = await TodoListService.GetTodoListFromOneDrive();
+            await toast.ShowToast("Todo list loaded successfully", "success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading todo list: {ex.Message}";
+            await toast.ShowToast("Failed to load todo list", "error");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ToggleCompleted(TodoItem item)
+    {
+        item.IsCompleted = !item.IsCompleted;
+        await UpdateTodoList();
+        await toast.ShowToast($"Task {(item.IsCompleted ? "completed" : "marked as incomplete")}", "info");
+    }
+
+    private async Task RemoveItem(TodoItem item)
+    {
+        try
+        {
+            await TodoListService.DeleteTodoItem(item);
+            todoItems.Remove(item);
+            errorMessage = null;
+            await toast.ShowToast("Task removed successfully", "success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting task: {ex.Message}";
+            await toast.ShowToast("Failed to remove task", "error");
+        }
+    }
+
+    private async Task AddNewItem()
+    {
+        if (string.IsNullOrWhiteSpace(newItem.Task))
+        {
+            await toast.ShowToast("Task description is required", "error");
+            return;
+        }
+        try
+        {
+            await TodoListService.AddTodoItem(newItem);
+            todoItems.Add(newItem);
+            newItem = new TodoItem { DueDate = DateTime.Today.AddDays(1) };
+            errorMessage = null;
+            await UpdateTodoList();
+            await toast.ShowToast("New task added successfully", "success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error adding new task: {ex.Message}";
+            await toast.ShowToast("Failed to add new task", "error");
+        }
+    }
+
+    private async Task UpdateTodoList()
+    {
+        try
+        {
+            await TodoListService.UpdateTodoListInOneDrive(todoItems);
+            errorMessage = null;
+            await toast.ShowToast("Todo list updated successfully", "success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error updating todo list: {ex.Message}";
+            await toast.ShowToast("Failed to update todo list", "error");
+        }
+    }
+
+    private void TryAgain()
+    {
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+
+    private void StartEdit(TodoItem item)
+    {
+        editingItem = item;
+    }
+
+    private void CancelEdit()
+    {
+        editingItem = null;
+    }
+
+    private async Task SaveEdit(TodoItem item)
+    {
+        editingItem = null;
+        await UpdateTodoList();
+        await toast.ShowToast("Task updated successfully", "success");
+    }
+
+    private void FilterTasks(string filter)
+    {
+        currentFilter = filter;
+    }
+
+    private string GetWeekendCountdown()
+    {
+        var now = DateTime.Now;
+        var nextSaturday = now.Date.AddDays((int)DayOfWeek.Saturday - (int)now.DayOfWeek + 7).Date;
+        var timeUntilWeekend = nextSaturday - now;
+        return $"{timeUntilWeekend.Days}d {timeUntilWeekend.Hours}h {timeUntilWeekend.Minutes}m {timeUntilWeekend.Seconds}s";
+    }
+
+    private int GetYearProgress()
+    {
+        var now = DateTime.Now;
+        return (int)((now - new DateTime(now.Year, 1, 1)).TotalDays / (now.Year % 4 == 0 ? 366.0 : 365.0) * 100);
+    }
+
+    private int GetMonthProgress()
+    {
+        var now = DateTime.Now;
+        return (int)((now.Day - 1) / (double)(DateTime.DaysInMonth(now.Year, now.Month)) * 100);
+    }
+
+    private int GetWeekProgress()
+    {
+        var now = DateTime.Now;
+        return (int)((now.DayOfWeek - DayOfWeek.Sunday) / 7.0 * 100);
+    }
+
+    private int GetDayProgress() => (int)((DateTime.Now.TimeOfDay.TotalSeconds / 86400) * 100);
+}

@@ -34,6 +34,7 @@ builder.Services.AddScoped<SGItineraryService>();
 builder.Services.AddScoped<ExcelApiService>();
 builder.Services.AddScoped<PurchaseListService>();
 builder.Services.AddScoped<TravelBudgetService>();
+builder.Services.AddScoped<TodoListService>();
 builder.Services.AddApiAuthorization();
 
 await builder.Build().RunAsync();

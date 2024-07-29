@@ -41,6 +41,10 @@
       "url": "css\/Shared\/Toast.css"
     },
     {
+      "hash": "sha256-oy5usjZ2p4SJt0b6H4JJj\/f5IBY\/NNRwIyWwZVfQ8gY=",
+      "url": "css\/Todo\/TodoList.css"
+    },
+    {
       "hash": "sha256-0SQ8R7OvJA9iTXReevakdj3v9voxQF7gJiXPgYXJAbc=",
       "url": "css\/Travel\/TravelBudget.css"
     },
@@ -101,7 +105,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-efefUcPg8Zzm9V27VzLVs+95w279OAd3HLEAoy7vj5Q=",
+      "hash": "sha256-K1rfa3kChAN8uHb2t9gSNW15IbOoOcT+QtQwpBcng8o=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -117,7 +121,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-tsqE1zYKzUx7ATm7f7NYpKEoEyUNMezUYnnOnnaGsGw=",
+      "hash": "sha256-0x8ueKAeai8N0j25MjdG6RKrOPS+2hywImq2IMFJORQ=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -129,7 +133,7 @@
       "url": "_framework\/Microsoft.AspNetCore.Components.Authorization.wasm"
     },
     {
-      "hash": "sha256-+ysAh1GjmqsQ0S5YvV\/H6cRpzYRqNSAILQqdDXyGntQ=",
+      "hash": "sha256-3oH7BH22MxfDp0Oz4xXnPQ6mWGqVQulO5jB3T4RQ2mo=",
       "url": "_framework\/Microsoft.AspNetCore.Components.wasm"
     },
     {
@@ -417,5 +421,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "3i1zRuLK"
+  "version": "azv1AEgC"
 };

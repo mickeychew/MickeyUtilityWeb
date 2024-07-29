@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "MickeyUtilityWeb",
   "resources": {
-    "hash": "sha256-R8ZEyGIQKA0GoSkUbHSN/wj7oTef58MJ1bd67vy2bCw=",
+    "hash": "sha256-mWFOVdE0D88fzL4Ud9EPrczdJ/vS9VFIG5KKH+Dj8ps=",
     "jsModuleNative": {
       "dotnet.native.8.0.7.pvkr2na9g4.js": "sha256-tFsxPBbhkdn6GKNBKvCRLzrfAHdyM86odYTe0MtrwMk="
     },
@@ -20,10 +20,10 @@
       "EPPlus.Interfaces.wasm": "sha256-1ivxaRqKUyyRIttdHUKXxddIGDaEU4AlyiD+ktlQwnM=",
       "EPPlus.System.Drawing.wasm": "sha256-zbq4Ro3GsS6aTeZsp6yNt+7JhXELs77az4ead5N8rGw=",
       "EPPlus.wasm": "sha256-q5WTa1AP70P8ksZAzx4VxqMTj05hp2NPHujAhdGx/4w=",
-      "MickeyUtilityWeb.wasm": "sha256-tsqE1zYKzUx7ATm7f7NYpKEoEyUNMezUYnnOnnaGsGw=",
+      "MickeyUtilityWeb.wasm": "sha256-0x8ueKAeai8N0j25MjdG6RKrOPS+2hywImq2IMFJORQ=",
       "Microsoft.AspNetCore.Authorization.wasm": "sha256-TXs+MpElGDjgqiBeIxMXMYMCVm0P64rDfQcU000/x18=",
       "Microsoft.AspNetCore.Components.Authorization.wasm": "sha256-WToepQ0BtcGyJwxXuw0dGKHWiWSqLMBE2X+Xy8whUb0=",
-      "Microsoft.AspNetCore.Components.wasm": "sha256-+ysAh1GjmqsQ0S5YvV/H6cRpzYRqNSAILQqdDXyGntQ=",
+      "Microsoft.AspNetCore.Components.wasm": "sha256-3oH7BH22MxfDp0Oz4xXnPQ6mWGqVQulO5jB3T4RQ2mo=",
       "Microsoft.AspNetCore.Components.Web.wasm": "sha256-AAZfde12uDAFifRybTQLepSGkSBNc2IwCzCZNbsiAlE=",
       "Microsoft.AspNetCore.Components.WebAssembly.Authentication.wasm": "sha256-iu6j+XQVnFwiYOR6+1xSkoY5UetgFcAhKydi1wlczbM=",
       "Microsoft.AspNetCore.Components.WebAssembly.wasm": "sha256-7cCb6MwyASmYPChVG3QG3XLGDsGmAlDpuMDbsrUVD8I=",

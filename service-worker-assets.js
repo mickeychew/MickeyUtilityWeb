@@ -41,6 +41,10 @@
       "url": "css\/Shared\/Toast.css"
     },
     {
+      "hash": "sha256-0SQ8R7OvJA9iTXReevakdj3v9voxQF7gJiXPgYXJAbc=",
+      "url": "css\/Travel\/TravelBudget.css"
+    },
+    {
       "hash": "sha256-4mWsDy3aHl36ZbGt8zByK7Pvd4kRUoNgTYzRnwmPHwg=",
       "url": "favicon.png"
     },
@@ -97,7 +101,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-QMLRLbCeOoVxV+uLi46c0481uR0Wu+Q9k81IguavIKg=",
+      "hash": "sha256-efefUcPg8Zzm9V27VzLVs+95w279OAd3HLEAoy7vj5Q=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -113,7 +117,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-uyxduOoAs0D0xIUEMn+QIZsw6SFaM2o+HAFs8VTZyz4=",
+      "hash": "sha256-tsqE1zYKzUx7ATm7f7NYpKEoEyUNMezUYnnOnnaGsGw=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -233,7 +237,7 @@
       "url": "_framework\/System.Collections.wasm"
     },
     {
-      "hash": "sha256-De1j3E\/\/tHeRCk1+gMRpysok26LlV0a3cY8K4jqWWTE=",
+      "hash": "sha256-Paagzi1FHnnbaFT88U0YS2CBmiQBhG8TwL7+L8HQDXk=",
       "url": "_framework\/System.ComponentModel.Annotations.wasm"
     },
     {
@@ -313,7 +317,7 @@
       "url": "_framework\/System.ObjectModel.wasm"
     },
     {
-      "hash": "sha256-9cF\/f9pStUHX4vbpTuLcQiiWlsbpvr7\/97JRoqGD1m0=",
+      "hash": "sha256-OVXCx5n19ye4V\/7Aqy2p0NZHUGlwuK1TAhWVO\/tPzsw=",
       "url": "_framework\/System.Private.CoreLib.wasm"
     },
     {
@@ -337,7 +341,7 @@
       "url": "_framework\/System.Runtime.Numerics.wasm"
     },
     {
-      "hash": "sha256-ddxVHsShBaePWNwgCkSH0CjkzMP3cm+C0kouD4Rw6QI=",
+      "hash": "sha256-1UrY2\/Lev2iBZJXULGY3tiDzqVw0dKDToNIRf7l11TU=",
       "url": "_framework\/System.Runtime.wasm"
     },
     {
@@ -413,5 +417,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "OSwEPB43"
+  "version": "3i1zRuLK"
 };

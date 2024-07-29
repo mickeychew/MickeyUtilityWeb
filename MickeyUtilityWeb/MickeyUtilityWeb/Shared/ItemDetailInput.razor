@@ -1,0 +1,34 @@
+﻿@code {
+    [Parameter] public string Label { get; set; }
+    [Parameter] public string Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Type { get; set; } = "text";
+    [Parameter] public string Step { get; set; } = "1";
+
+    private bool isEditing = false;
+    private string editValue;
+
+    private void StartEditing()
+    {
+        editValue = Value;
+        isEditing = true;
+    }
+
+    private async Task SaveEdit()
+    {
+        isEditing = false;
+        await ValueChanged.InvokeAsync(editValue);
+    }
+}
+
+<div class="item-detail-input">
+    <span class="item-detail-label">@Label</span>
+    @if (isEditing)
+    {
+        <input type="@Type" step="@Step" @bind="editValue" @bind:event="oninput" @onblur="SaveEdit" @onkeyup="@(e => { if (e.Key == "Enter") SaveEdit(); })" class="item-detail-edit" />
+    }
+    else
+    {
+        <span class="item-detail-value" @onclick="StartEditing">@Value</span>
+    }
+</div>

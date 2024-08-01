@@ -11,7 +11,6 @@
 
 <link href="css/Todo/TodoList.css" rel="stylesheet" />
 <link href="css/Shared/Toast.css" rel="stylesheet" />
-@* <img src="images/JellyPanda.jpg" alt="Cute Panda" class="panda-background" /> *@
 
 <div class="todo-container">
     <AuthorizeView>
@@ -62,7 +61,7 @@
             {
                 <div class="alert-danger">
                     <p>@errorMessage</p>
-                    <button class="btn btn-primary" @onclick="TryAgain">Try Again</button>
+                    <button @onclick="TryAgain">Try Again</button>
                 </div>
             }
             else
@@ -70,6 +69,13 @@
                 <div class="todo-form">
                     <input type="text" class="todo-input-small" placeholder="Add a new task..." @bind="newItem.Task" @bind:event="oninput" />
                     <input type="date" class="todo-input-small" @bind="newItem.DueDate" />
+                    <select class="todo-input-small" @bind="newItem.Category">
+                        <option value="">Select Category</option>
+                        <option value="Work">Work</option>
+                        <option value="Personal">Personal</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Health">Health</option>
+                    </select>
                     <button class="todo-add-btn" @onclick="AddNewItem">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -81,11 +87,18 @@
                     @foreach (var item in FilteredTodoItems)
                     {
                         <li class="todo-item @(item.IsCompleted ? "completed" : "")">
+                            <span class="todo-category category-@item.Category.ToLower()">@item.Category</span>
                             @if (editingItem == item)
                             {
                                 <div class="todo-edit-form">
                                     <input type="text" class="todo-edit-input" @bind="item.Task" />
                                     <input type="date" class="todo-edit-date" @bind="item.DueDate" />
+                                    <select class="todo-edit-category" @bind="item.Category">
+                                        <option value="Work">Work</option>
+                                        <option value="Personal">Personal</option>
+                                        <option value="Shopping">Shopping</option>
+                                        <option value="Health">Health</option>
+                                    </select>
                                     <div class="todo-edit-actions">
                                         <button class="todo-edit-save" @onclick="@(() => SaveEdit(item))">Save</button>
                                         <button class="todo-edit-cancel" @onclick="CancelEdit">Cancel</button>

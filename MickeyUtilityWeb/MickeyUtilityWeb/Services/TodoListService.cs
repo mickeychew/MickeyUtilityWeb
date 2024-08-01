@@ -29,14 +29,15 @@ namespace MickeyUtilityWeb.Services
 
                 var updateData = new List<object[]>
                 {
-                    new object[] { "Task", "IsCompleted", "DueDate" }
+                    new object[] { "Task", "IsCompleted", "DueDate", "Category" }
                 };
 
                 updateData.AddRange(todoList.Select(item => new object[]
                 {
                     item.Task,
                     item.IsCompleted,
-                    item.DueDate?.ToString("yyyy-MM-dd") ?? ""
+                    item.DueDate?.ToString("yyyy-MM-dd") ?? "",
+                    item.Category
                 }));
 
                 // Pad the data if necessary
@@ -45,7 +46,7 @@ namespace MickeyUtilityWeb.Services
                     updateData.Add(new object[currentColumns]);
                 }
 
-                string rangeAddress = $"{WORKSHEET_NAME}!A1:C{Math.Max(currentRows, updateData.Count)}";
+                string rangeAddress = $"{WORKSHEET_NAME}!A1:D{Math.Max(currentRows, updateData.Count)}";
 
                 await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
 
@@ -79,7 +80,8 @@ namespace MickeyUtilityWeb.Services
                         {
                             Task = worksheet.Cells[row, 1].Value?.ToString(),
                             IsCompleted = bool.Parse(worksheet.Cells[row, 2].Value?.ToString() ?? "false"),
-                            DueDate = DateTime.TryParse(worksheet.Cells[row, 3].Value?.ToString(), out var dueDate) ? dueDate : (DateTime?)null
+                            DueDate = DateTime.TryParse(worksheet.Cells[row, 3].Value?.ToString(), out var dueDate) ? dueDate : (DateTime?)null,
+                            Category = worksheet.Cells[row, 4].Value?.ToString() ?? "Uncategorized"
                         };
 
                         if (!string.IsNullOrWhiteSpace(item.Task))
@@ -109,17 +111,18 @@ namespace MickeyUtilityWeb.Services
 
                 var updateData = new List<object[]>
                 {
-                    new object[] { "Task", "IsCompleted", "DueDate" }
+                    new object[] { "Task", "IsCompleted", "DueDate", "Category" }
                 };
 
                 updateData.AddRange(currentItems.Select(item => new object[]
                 {
                     item.Task,
                     item.IsCompleted,
-                    item.DueDate?.ToString("yyyy-MM-dd") ?? ""
+                    item.DueDate?.ToString("yyyy-MM-dd") ?? "",
+                    item.Category
                 }));
 
-                string newRangeAddress = $"{WORKSHEET_NAME}!A1:C{updateData.Count}";
+                string newRangeAddress = $"{WORKSHEET_NAME}!A1:D{updateData.Count}";
 
                 await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, newRangeAddress, updateData);
 
@@ -154,7 +157,8 @@ namespace MickeyUtilityWeb.Services
                         if (worksheet.Cells[row, 1].Value?.ToString() == itemToDelete.Task &&
                             bool.Parse(worksheet.Cells[row, 2].Value?.ToString() ?? "false") == itemToDelete.IsCompleted &&
                             DateTime.TryParse(worksheet.Cells[row, 3].Value?.ToString(), out var dueDate) &&
-                            dueDate == itemToDelete.DueDate)
+                            dueDate == itemToDelete.DueDate &&
+                            worksheet.Cells[row, 4].Value?.ToString() == itemToDelete.Category)
                         {
                             rowToDelete = row;
                             break;
@@ -169,7 +173,7 @@ namespace MickeyUtilityWeb.Services
                 }
 
                 // Delete the specific row
-                var deleteRowRange = $"{WORKSHEET_NAME}!A{rowToDelete}:C{rowToDelete}";
+                var deleteRowRange = $"{WORKSHEET_NAME}!A{rowToDelete}:D{rowToDelete}";
                 _logger.LogInformation($"Deleting row range: {deleteRowRange}");
 
                 await _excelApiService.DeleteRow(FILE_ID, WORKSHEET_NAME, deleteRowRange);

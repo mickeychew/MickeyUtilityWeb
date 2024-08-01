@@ -41,7 +41,7 @@
       "url": "css\/Shared\/Toast.css"
     },
     {
-      "hash": "sha256-oy5usjZ2p4SJt0b6H4JJj\/f5IBY\/NNRwIyWwZVfQ8gY=",
+      "hash": "sha256-DlkCTDu8eSbMIaf\/oFdSojOmcVELCyc8lK7n3pBzdMg=",
       "url": "css\/Todo\/TodoList.css"
     },
     {
@@ -105,7 +105,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-K1rfa3kChAN8uHb2t9gSNW15IbOoOcT+QtQwpBcng8o=",
+      "hash": "sha256-gH1KMEcELz3S76MUae+NEF73nOB9uHjs7LLxZJiHNI8=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -121,7 +121,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-0x8ueKAeai8N0j25MjdG6RKrOPS+2hywImq2IMFJORQ=",
+      "hash": "sha256-xFR9jcMW6LSJhI6oE3XtP3d2MCEnnpe3Et3qT7Vkitk=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -421,5 +421,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "azv1AEgC"
+  "version": "mcrp6cVK"
 };

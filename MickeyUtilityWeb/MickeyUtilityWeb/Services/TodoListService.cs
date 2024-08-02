@@ -130,7 +130,7 @@ namespace MickeyUtilityWeb.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error adding new todo item");
+                _logger.LogError(ex, "Exception error adding new todo item");
                 throw;
             }
         }

@@ -26,21 +26,32 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
+                _logger.LogInformation("Starting UpdateTravelBudgetInOneDrive");
                 var (currentRows, currentColumns, _) = await _excelApiService.GetCurrentRange(FILE_ID, ITEMS_WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
                 {
-                    new object[] { "Name", "Category", "Price", "Date", "Shop" }
+                    new object[] { "Name", "Category", "Price", "Date", "Shop", "LastModifiedDate", "IsDeleted", "DeletedDate" }
                 };
 
-                updateData.AddRange(travelBudgetList.Select(item => new object[]
+                foreach (var item in travelBudgetList)
                 {
-                    item.Name,
-                    item.Category,
-                    item.Price,
-                    item.Date.ToString("yyyy-MM-dd"),
-                    item.Shop
-                }));
+                    _logger.LogInformation($"Processing item: {item.Name}, Last Modified: {item.LastModifiedDate}");
+                    item.LastModifiedDate = DateTime.UtcNow; // Update LastModifiedDate for each item
+                    _logger.LogInformation($"Updated LastModifiedDate for {item.Name} to {item.LastModifiedDate}");
+
+                    updateData.Add(new object[]
+                    {
+                        item.Name,
+                        item.Category,
+                        item.Price,
+                        item.Date.ToString("yyyy-MM-dd"),
+                        item.Shop,
+                        item.LastModifiedDate.ToString("yyyy-MM-dd HH:mm:ss"),
+                        item.IsDeleted,
+                        item.DeletedDate?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""
+                    });
+                }
 
                 // Pad the data if necessary
                 while (updateData.Count < currentRows)
@@ -48,7 +59,7 @@ namespace MickeyUtilityWeb.Services
                     updateData.Add(new object[currentColumns]);
                 }
 
-                string rangeAddress = $"{ITEMS_WORKSHEET_NAME}!A1:E{Math.Max(currentRows, updateData.Count)}";
+                string rangeAddress = $"{ITEMS_WORKSHEET_NAME}!A1:H{Math.Max(currentRows, updateData.Count)}";
 
                 await _excelApiService.UpdateRange(FILE_ID, ITEMS_WORKSHEET_NAME, rangeAddress, updateData);
 
@@ -91,7 +102,10 @@ namespace MickeyUtilityWeb.Services
                             Category = itemsWorksheet.Cells[row, 2].Value?.ToString(),
                             Price = decimal.Parse(itemsWorksheet.Cells[row, 3].Value?.ToString() ?? "0"),
                             Date = DateTime.Parse(itemsWorksheet.Cells[row, 4].Value?.ToString() ?? DateTime.Now.ToString()),
-                            Shop = itemsWorksheet.Cells[row, 5].Value?.ToString()
+                            Shop = itemsWorksheet.Cells[row, 5].Value?.ToString(),
+                            LastModifiedDate = DateTime.Parse(itemsWorksheet.Cells[row, 6].Value?.ToString() ?? DateTime.Now.ToString()),
+                            IsDeleted = bool.Parse(itemsWorksheet.Cells[row, 7].Value?.ToString() ?? "false"),
+                            DeletedDate = DateTime.TryParse(itemsWorksheet.Cells[row, 8].Value?.ToString(), out var deletedDate) ? deletedDate : (DateTime?)null
                         };
 
                         if (!string.IsNullOrWhiteSpace(item.Name))
@@ -114,28 +128,11 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
+                newItem.LastModifiedDate = DateTime.UtcNow;
                 var (currentItems, _) = await GetTravelBudgetFromOneDrive();
                 currentItems.Add(newItem);
 
-                var (_, _, rangeAddress) = await _excelApiService.GetCurrentRange(FILE_ID, ITEMS_WORKSHEET_NAME);
-
-                var updateData = new List<object[]>
-                {
-                    new object[] { "Name", "Category", "Price", "Date", "Shop" } // Headers in row 1
-                };
-
-                updateData.AddRange(currentItems.Select(item => new object[]
-                {
-                    item.Name,
-                    item.Category,
-                    item.Price,
-                    item.Date.ToString("yyyy-MM-dd"),
-                    item.Shop
-                }));
-
-                string newRangeAddress = $"{ITEMS_WORKSHEET_NAME}!A1:E{updateData.Count}";
-
-                await _excelApiService.UpdateRange(FILE_ID, ITEMS_WORKSHEET_NAME, newRangeAddress, updateData);
+                await UpdateTravelBudgetInOneDrive(currentItems);
 
                 _logger.LogInformation($"Successfully added new item: {newItem.Name}");
             }
@@ -152,48 +149,56 @@ namespace MickeyUtilityWeb.Services
             {
                 _logger.LogInformation($"Attempting to delete travel budget item: {itemToDelete.Name}");
 
-                var (rowCount, colCount, _) = await _excelApiService.GetCurrentRange(FILE_ID, ITEMS_WORKSHEET_NAME);
+                var (currentItems, _) = await GetTravelBudgetFromOneDrive();
+                var itemToUpdate = currentItems.FirstOrDefault(i => i.Name == itemToDelete.Name && i.Date == itemToDelete.Date && i.Shop == itemToDelete.Shop);
 
-                var excelContent = await _excelApiService.GetFileContent(FILE_ID);
-
-                int rowToDelete = -1;
-
-                using (var stream = new MemoryStream(excelContent))
-                using (var package = new ExcelPackage(stream))
+                if (itemToUpdate != null)
                 {
-                    var worksheet = package.Workbook.Worksheets[ITEMS_WORKSHEET_NAME];
+                    itemToUpdate.IsDeleted = true;
+                    itemToUpdate.DeletedDate = DateTime.UtcNow;
+                    itemToUpdate.LastModifiedDate = DateTime.UtcNow;
 
-                    for (int row = 2; row <= rowCount; row++) // Start from row 2 to skip header
-                    {
-                        if (worksheet.Cells[row, 1].Value?.ToString() == itemToDelete.Name &&
-                            worksheet.Cells[row, 2].Value?.ToString() == itemToDelete.Category &&
-                            decimal.Parse(worksheet.Cells[row, 3].Value?.ToString() ?? "0") == itemToDelete.Price &&
-                            DateTime.Parse(worksheet.Cells[row, 4].Value?.ToString() ?? DateTime.Now.ToString()) == itemToDelete.Date &&
-                            worksheet.Cells[row, 5].Value?.ToString() == itemToDelete.Shop)
-                        {
-                            rowToDelete = row;
-                            break;
-                        }
-                    }
+                    await UpdateTravelBudgetInOneDrive(currentItems);
+                    _logger.LogInformation($"Successfully soft-deleted item: {itemToDelete.Name}");
                 }
-
-                if (rowToDelete == -1)
+                else
                 {
                     _logger.LogWarning($"Item not found for deletion: {itemToDelete.Name}");
-                    return;
                 }
-
-                // Delete the specific row
-                var deleteRowRange = $"{ITEMS_WORKSHEET_NAME}!A{rowToDelete}:E{rowToDelete}";
-                _logger.LogInformation($"Deleting row range: {deleteRowRange}");
-
-                await _excelApiService.DeleteRow(FILE_ID, ITEMS_WORKSHEET_NAME, deleteRowRange);
-
-                _logger.LogInformation($"Successfully deleted item: {itemToDelete.Name}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error deleting travel budget item: {itemToDelete.Name}");
+                _logger.LogError(ex, $"Error soft-deleting travel budget item: {itemToDelete.Name}");
+                throw;
+            }
+        }
+
+        public async Task UpdateTravelBudgetItem(TravelBudgetItem itemToUpdate)
+        {
+            try
+            {
+                _logger.LogInformation($"Attempting to update travel budget item: {itemToUpdate.Name}");
+
+                var (currentItems, _) = await GetTravelBudgetFromOneDrive();
+                var existingItem = currentItems.FirstOrDefault(i => i.Name == itemToUpdate.Name && i.Date == itemToUpdate.Date && i.Shop == itemToUpdate.Shop);
+
+                if (existingItem != null)
+                {
+                    existingItem.Category = itemToUpdate.Category;
+                    existingItem.Price = itemToUpdate.Price;
+                    existingItem.LastModifiedDate = DateTime.UtcNow;
+
+                    await UpdateTravelBudgetInOneDrive(currentItems);
+                    _logger.LogInformation($"Successfully updated item: {itemToUpdate.Name}");
+                }
+                else
+                {
+                    _logger.LogWarning($"Item not found for update: {itemToUpdate.Name}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating travel budget item: {itemToUpdate.Name}");
                 throw;
             }
         }

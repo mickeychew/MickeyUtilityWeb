@@ -19,5 +19,8 @@ namespace MickeyUtilityWeb.Models
 
 
         public string Shop { get; set; }
+        public DateTime LastModifiedDate { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedDate { get; set; }
     }
 }

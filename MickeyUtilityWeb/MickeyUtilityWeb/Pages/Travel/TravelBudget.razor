@@ -8,6 +8,7 @@
 @inject NavigationManager NavigationManager
 @inject IAccessTokenProvider TokenProvider
 @inject IJSRuntime JSRuntime
+@inject ILogger<TravelBudget> Logger
 <link href="css/Travel/TravelBudget.css" rel="stylesheet" />
 <link href="css/Shared/Toast.css" rel="stylesheet" />
 <link href="css/Shared/ItemDetailInput.css" rel="stylesheet" />
@@ -144,13 +145,14 @@
     private bool showNewItemForm = false;
     private decimal budget = 0;
 
-    private decimal totalSpent => travelBudgetItems.Sum(item => item.Price);
+    private decimal totalSpent => travelBudgetItems.Where(item => !item.IsDeleted).Sum(item => item.Price);
     private double progressPercentage => budget == 0 ? 0 : (double)totalSpent / (double)budget * 100;
 
     private IEnumerable<TravelBudgetItem> filteredItems => travelBudgetItems
-        .Where(item => item.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                       item.Category.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                       item.Shop.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+        .Where(item => !item.IsDeleted &&
+                       (item.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                        item.Category.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                        item.Shop.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)))
         .OrderByDescending(item => item.Date);
 
     [CascadingParameter]
@@ -217,7 +219,7 @@
         try
         {
             await TravelBudgetService.DeleteTravelBudgetItem(item);
-            travelBudgetItems.Remove(item);
+            item.IsDeleted = true;
             expandedItems.Remove(item);
             errorMessage = null;
             await toast.ShowToast("Item removed successfully", "success");
@@ -245,7 +247,7 @@
                     Date = DateTime.Today
                 };
             errorMessage = null;
-            await UpdateTravelBudget();
+            ToggleNewItemForm();
             await toast.ShowToast("New item added successfully", "success");
         }
         catch (Exception ex)
@@ -259,14 +261,32 @@
     {
         try
         {
+            Logger.LogInformation("Starting UpdateTravelBudget");
+            foreach (var item in travelBudgetItems)
+            {
+                Logger.LogInformation($"Before update - Item: {item.Name}, Last Modified: {item.LastModifiedDate}");
+            }
+
             await TravelBudgetService.UpdateTravelBudgetInOneDrive(travelBudgetItems);
+
+            // Refresh the items after update
+            var result = await TravelBudgetService.GetTravelBudgetFromOneDrive();
+            travelBudgetItems = result.Items;
+
+            foreach (var item in travelBudgetItems)
+            {
+                Logger.LogInformation($"After update - Item: {item.Name}, Last Modified: {item.LastModifiedDate}");
+            }
+
             errorMessage = null;
             await toast.ShowToast("Travel budget updated successfully", "success");
+            Logger.LogInformation("Travel budget updated successfully");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error updating travel budget: {ex.Message}";
             await toast.ShowToast("Failed to update travel budget", "error");
+            Logger.LogError(ex, "Error updating travel budget");
         }
     }
 

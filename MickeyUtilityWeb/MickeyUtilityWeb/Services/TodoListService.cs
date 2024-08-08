@@ -25,28 +25,35 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
-                var (currentRows, currentColumns, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
+                var (currentRows, _, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
                 {
-                    new object[] { "Task", "IsCompleted", "DueDate", "Category" }
+                    new object[] { "Title", "Description", "DueDate", "IsCompleted", "Category", "SubtaskOf", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
                 };
 
                 updateData.AddRange(todoList.Select(item => new object[]
                 {
-                    item.Task,
+                    item.Title,
+                    item.Description,
+                    item.DueDate?.ToString("yyyy-MM-ddTHH:mm:sszzz"),
                     item.IsCompleted,
-                    item.DueDate?.ToString("yyyy-MM-dd") ?? "",
-                    item.Category
+                    item.Category,
+                    item.SubtaskOf,
+                    item.CreatedAt.ToString("yyyy-MM-ddTHH:mm:sszzz"),
+                    item.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:sszzz"),
+                    item.IsDeleted,
+                    item.LastModifiedDate.ToString("yyyy-MM-ddTHH:mm:sszzz"),
+                    item.DeletedDate?.ToString("yyyy-MM-ddTHH:mm:sszzz")
                 }));
 
                 // Pad the data if necessary
                 while (updateData.Count < currentRows)
                 {
-                    updateData.Add(new object[currentColumns]);
+                    updateData.Add(new object[11]);
                 }
 
-                string rangeAddress = $"{WORKSHEET_NAME}!A1:D{Math.Max(currentRows, updateData.Count)}";
+                string rangeAddress = $"{WORKSHEET_NAME}!A1:K{Math.Max(currentRows, updateData.Count)}";
 
                 await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
 
@@ -70,7 +77,6 @@ namespace MickeyUtilityWeb.Services
                 {
                     var worksheet = package.Workbook.Worksheets[0];
                     var rowCount = worksheet.Dimension.Rows;
-                    var colCount = worksheet.Dimension.Columns;
 
                     var records = new List<TodoItem>();
 
@@ -78,13 +84,20 @@ namespace MickeyUtilityWeb.Services
                     {
                         var item = new TodoItem
                         {
-                            Task = worksheet.Cells[row, 1].Value?.ToString(),
-                            IsCompleted = bool.Parse(worksheet.Cells[row, 2].Value?.ToString() ?? "false"),
+                            Title = worksheet.Cells[row, 1].Value?.ToString(),
+                            Description = worksheet.Cells[row, 2].Value?.ToString(),
                             DueDate = DateTime.TryParse(worksheet.Cells[row, 3].Value?.ToString(), out var dueDate) ? dueDate : (DateTime?)null,
-                            Category = worksheet.Cells[row, 4].Value?.ToString() ?? "Uncategorized"
+                            IsCompleted = bool.Parse(worksheet.Cells[row, 4].Value?.ToString() ?? "false"),
+                            Category = worksheet.Cells[row, 5].Value?.ToString() ?? "Uncategorized",
+                            SubtaskOf = worksheet.Cells[row, 6].Value?.ToString(),
+                            CreatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 7].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
+                            UpdatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 8].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
+                            IsDeleted = bool.Parse(worksheet.Cells[row, 9].Value?.ToString() ?? "false"),
+                            LastModifiedDate = DateTimeOffset.Parse(worksheet.Cells[row, 10].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
+                            DeletedDate = DateTime.TryParse(worksheet.Cells[row, 11].Value?.ToString(), out var deletedDate) ? deletedDate : (DateTime?)null
                         };
 
-                        if (!string.IsNullOrWhiteSpace(item.Task))
+                        if (!string.IsNullOrWhiteSpace(item.Title))
                         {
                             records.Add(item);
                         }
@@ -105,28 +118,14 @@ namespace MickeyUtilityWeb.Services
             try
             {
                 var currentItems = await GetTodoListFromOneDrive();
+                newItem.CreatedAt = DateTimeOffset.Now;
+                newItem.UpdatedAt = DateTimeOffset.Now;
+                newItem.LastModifiedDate = DateTimeOffset.Now;
                 currentItems.Add(newItem);
 
-                var (_, _, rangeAddress) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
+                await UpdateTodoListInOneDrive(currentItems);
 
-                var updateData = new List<object[]>
-                {
-                    new object[] { "Task", "IsCompleted", "DueDate", "Category" }
-                };
-
-                updateData.AddRange(currentItems.Select(item => new object[]
-                {
-                    item.Task,
-                    item.IsCompleted,
-                    item.DueDate?.ToString("yyyy-MM-dd") ?? "",
-                    item.Category
-                }));
-
-                string newRangeAddress = $"{WORKSHEET_NAME}!A1:D{updateData.Count}";
-
-                await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, newRangeAddress, updateData);
-
-                _logger.LogInformation($"Successfully added new item: {newItem.Task}");
+                _logger.LogInformation($"Successfully added new item: {newItem.Title}");
             }
             catch (Exception ex)
             {
@@ -139,50 +138,29 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
-                _logger.LogInformation($"Attempting to delete todo item: {itemToDelete.Task}");
+                _logger.LogInformation($"Attempting to delete todo item: {itemToDelete.Title}");
 
-                var (rowCount, colCount, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
+                var currentItems = await GetTodoListFromOneDrive();
+                var itemToRemove = currentItems.FirstOrDefault(i => i.Title == itemToDelete.Title && i.CreatedAt == itemToDelete.CreatedAt);
 
-                var excelContent = await _excelApiService.GetFileContent(FILE_ID);
-
-                int rowToDelete = -1;
-
-                using (var stream = new MemoryStream(excelContent))
-                using (var package = new ExcelPackage(stream))
+                if (itemToRemove != null)
                 {
-                    var worksheet = package.Workbook.Worksheets[0];
+                    itemToRemove.IsDeleted = true;
+                    itemToRemove.DeletedDate = DateTime.Now;
+                    itemToRemove.LastModifiedDate = DateTimeOffset.Now;
 
-                    for (int row = 2; row <= rowCount; row++)
-                    {
-                        if (worksheet.Cells[row, 1].Value?.ToString() == itemToDelete.Task &&
-                            bool.Parse(worksheet.Cells[row, 2].Value?.ToString() ?? "false") == itemToDelete.IsCompleted &&
-                            DateTime.TryParse(worksheet.Cells[row, 3].Value?.ToString(), out var dueDate) &&
-                            dueDate == itemToDelete.DueDate &&
-                            worksheet.Cells[row, 4].Value?.ToString() == itemToDelete.Category)
-                        {
-                            rowToDelete = row;
-                            break;
-                        }
-                    }
+                    await UpdateTodoListInOneDrive(currentItems);
+
+                    _logger.LogInformation($"Successfully marked item as deleted: {itemToDelete.Title}");
                 }
-
-                if (rowToDelete == -1)
+                else
                 {
-                    _logger.LogWarning($"Item not found for deletion: {itemToDelete.Task}");
-                    return;
+                    _logger.LogWarning($"Item not found for deletion: {itemToDelete.Title}");
                 }
-
-                // Delete the specific row
-                var deleteRowRange = $"{WORKSHEET_NAME}!A{rowToDelete}:D{rowToDelete}";
-                _logger.LogInformation($"Deleting row range: {deleteRowRange}");
-
-                await _excelApiService.DeleteRow(FILE_ID, WORKSHEET_NAME, deleteRowRange);
-
-                _logger.LogInformation($"Successfully deleted item: {itemToDelete.Task}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error deleting todo item: {itemToDelete.Task}");
+                _logger.LogError(ex, $"Error deleting todo item: {itemToDelete.Title}");
                 throw;
             }
         }

@@ -67,15 +67,11 @@
             else
             {
                 <div class="todo-form">
-                    <input type="text" class="todo-input-small" placeholder="Add a new task..." @bind="newItem.Task" @bind:event="oninput" />
+                    <input type="text" class="todo-input-small" placeholder="Add a new task..." @bind="newItem.Title" @bind:event="oninput" />
+                    <input type="text" class="todo-input-small" placeholder="Description" @bind="newItem.Description" />
                     <input type="date" class="todo-input-small" @bind="newItem.DueDate" />
-                    <select class="todo-input-small" @bind="newItem.Category">
-                        <option value="">Select Category</option>
-                        <option value="Work">Work</option>
-                        <option value="Personal">Personal</option>
-                        <option value="Shopping">Shopping</option>
-                        <option value="Health">Health</option>
-                    </select>
+                    <input type="text" class="todo-input-small" placeholder="Category" @bind="newItem.Category" />
+                    <input type="text" class="todo-input-small" placeholder="Subtask of" @bind="newItem.SubtaskOf" />
                     <button class="todo-add-btn" @onclick="AddNewItem">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -86,19 +82,16 @@
                 <ul class="todo-list">
                     @foreach (var item in FilteredTodoItems)
                     {
-                        <li class="todo-item @(item.IsCompleted ? "completed" : "")">
+                        <li class="todo-item @(item.IsCompleted ? "completed" : "") @(item.IsDeleted ? "deleted" : "")">
                             <span class="todo-category category-@item.Category.ToLower()">@item.Category</span>
                             @if (editingItem == item)
                             {
                                 <div class="todo-edit-form">
-                                    <input type="text" class="todo-edit-input" @bind="item.Task" />
+                                    <input type="text" class="todo-edit-input" @bind="item.Title" />
+                                    <input type="text" class="todo-edit-input" @bind="item.Description" />
                                     <input type="date" class="todo-edit-date" @bind="item.DueDate" />
-                                    <select class="todo-edit-category" @bind="item.Category">
-                                        <option value="Work">Work</option>
-                                        <option value="Personal">Personal</option>
-                                        <option value="Shopping">Shopping</option>
-                                        <option value="Health">Health</option>
-                                    </select>
+                                    <input type="text" class="todo-edit-input" @bind="item.Category" />
+                                    <input type="text" class="todo-edit-input" @bind="item.SubtaskOf" />
                                     <div class="todo-edit-actions">
                                         <button class="todo-edit-save" @onclick="@(() => SaveEdit(item))">Save</button>
                                         <button class="todo-edit-cancel" @onclick="CancelEdit">Cancel</button>
@@ -109,8 +102,15 @@
                             {
                                 <input type="checkbox" class="todo-checkbox" checked="@item.IsCompleted" @onchange="@(() => ToggleCompleted(item))" />
                                 <div class="todo-content">
-                                    <span class="todo-text">@item.Task</span>
+                                    <span class="todo-text">@item.Title</span>
+                                    <span class="todo-description">@item.Description</span>
                                     <span class="todo-date">@(item.DueDate?.ToString("MMM dd, yyyy"))</span>
+                                    @if (!string.IsNullOrEmpty(item.SubtaskOf))
+                                    {
+                                        <span class="todo-subtask-of">Subtask of: @item.SubtaskOf</span>
+                                    }
+                                    <span class="todo-created-at">Created: @item.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                                    <span class="todo-updated-at">Updated: @item.UpdatedAt.ToString("MMM dd, yyyy HH:mm")</span>
                                 </div>
                                 <div class="todo-actions">
                                     <button class="todo-edit-btn" @onclick="@(() => StartEdit(item))">
@@ -150,9 +150,9 @@
 
     private IEnumerable<TodoItem> FilteredTodoItems => currentFilter switch
     {
-        "completed" => todoItems.Where(item => item.IsCompleted),
-        "incomplete" => todoItems.Where(item => !item.IsCompleted),
-        _ => todoItems
+        "completed" => todoItems.Where(item => item.IsCompleted && !item.IsDeleted),
+        "incomplete" => todoItems.Where(item => !item.IsCompleted && !item.IsDeleted),
+        _ => todoItems.Where(item => !item.IsDeleted)
     };
 
     [CascadingParameter]
@@ -190,6 +190,8 @@
     private async Task ToggleCompleted(TodoItem item)
     {
         item.IsCompleted = !item.IsCompleted;
+        item.UpdatedAt = DateTimeOffset.Now;
+        item.LastModifiedDate = DateTimeOffset.Now;
         await UpdateTodoList();
         await toast.ShowToast($"Task {(item.IsCompleted ? "completed" : "marked as incomplete")}", "info");
     }
@@ -199,7 +201,7 @@
         try
         {
             await TodoListService.DeleteTodoItem(item);
-            todoItems.Remove(item);
+            todoItems.RemoveAll(i => i.Title == item.Title && i.CreatedAt == item.CreatedAt);
             errorMessage = null;
             await toast.ShowToast("Task removed successfully", "success");
         }
@@ -212,13 +214,16 @@
 
     private async Task AddNewItem()
     {
-        if (string.IsNullOrWhiteSpace(newItem.Task))
+        if (string.IsNullOrWhiteSpace(newItem.Title))
         {
-            await toast.ShowToast("Task description is required", "error");
+            await toast.ShowToast("Task title is required", "error");
             return;
         }
         try
         {
+            newItem.CreatedAt = DateTimeOffset.Now;
+            newItem.UpdatedAt = DateTimeOffset.Now;
+            newItem.LastModifiedDate = DateTimeOffset.Now;
             await TodoListService.AddTodoItem(newItem);
             todoItems.Add(newItem);
             newItem = new TodoItem { DueDate = DateTime.Today.AddDays(1) };
@@ -265,6 +270,8 @@
 
     private async Task SaveEdit(TodoItem item)
     {
+        item.UpdatedAt = DateTimeOffset.Now;
+        item.LastModifiedDate = DateTimeOffset.Now;
         editingItem = null;
         await UpdateTodoList();
         await toast.ShowToast("Task updated successfully", "success");

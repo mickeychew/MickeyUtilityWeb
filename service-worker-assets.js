@@ -37,6 +37,10 @@
       "url": "css\/Shared\/ItemDetailInput.css"
     },
     {
+      "hash": "sha256-a7dyQLZkLGMhMA8dJY9aIqGFhDpPeIsXORO4eneDB28=",
+      "url": "css\/Shared\/pastelPurpleWeb.css"
+    },
+    {
       "hash": "sha256-waINLfsoIZtWjtTM++ZUci\/4iYmAWVdDtwXWpZ\/oPJM=",
       "url": "css\/Shared\/Toast.css"
     },
@@ -109,7 +113,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-NRDs6G2tP13Frar1SoUz0eXprlkLchO+EnfawNMy9t8=",
+      "hash": "sha256-RngAdNoIRpXFzfFuRK+zd6+8EnQ1ZXElFeRpEzQ6grU=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -125,7 +129,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-HX7XI\/LlJ4lG4s9EAA+ITrxM0qj0m4PJ2RpgoYVQVgY=",
+      "hash": "sha256-jXxhRvLXDOwEmq6vhoX\/mttr+1rcdWug8oqS5hAMN5A=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -137,7 +141,7 @@
       "url": "_framework\/Microsoft.AspNetCore.Components.Authorization.wasm"
     },
     {
-      "hash": "sha256-3oH7BH22MxfDp0Oz4xXnPQ6mWGqVQulO5jB3T4RQ2mo=",
+      "hash": "sha256-dQ4JznwOb5Qy0fhBti1MtqPTMOQ5baXsl9rToERE8\/4=",
       "url": "_framework\/Microsoft.AspNetCore.Components.wasm"
     },
     {
@@ -425,5 +429,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "xowNbhfV"
+  "version": "VtpXxkCA"
 };

@@ -21,10 +21,12 @@ namespace MickeyUtilityWeb.Services
             _logger = logger;
         }
 
-        public async Task UpdateTodoListInOneDrive(List<TodoItem> todoList)
+        public async Task<List<TodoItem>> UpdateTodoListInOneDrive(List<TodoItem> todoList)
         {
             try
             {
+                await GetFileContent(); // Ensure we have the latest content before updating
+
                 var (currentRows, _, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
@@ -47,7 +49,6 @@ namespace MickeyUtilityWeb.Services
                     item.DeletedDate?.ToString("yyyy-MM-ddTHH:mm:sszzz")
                 }));
 
-                // Pad the data if necessary
                 while (updateData.Count < currentRows)
                 {
                     updateData.Add(new object[11]);
@@ -58,6 +59,9 @@ namespace MickeyUtilityWeb.Services
                 await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
 
                 _logger.LogInformation("Successfully updated todo list in OneDrive");
+
+                // Return the updated list
+                return await GetTodoListFromOneDrive();
             }
             catch (Exception ex)
             {
@@ -70,7 +74,7 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
-                var excelContent = await _excelApiService.GetFileContent(FILE_ID);
+                var excelContent = await GetFileContent();
 
                 using (var stream = new MemoryStream(excelContent))
                 using (var package = new ExcelPackage(stream))
@@ -113,19 +117,23 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        public async Task AddTodoItem(TodoItem newItem)
+        public async Task<List<TodoItem>> AddTodoItem(TodoItem newItem)
         {
             try
             {
+                await GetFileContent(); // Ensure we have the latest content before adding
+
                 var currentItems = await GetTodoListFromOneDrive();
                 newItem.CreatedAt = DateTimeOffset.Now;
                 newItem.UpdatedAt = DateTimeOffset.Now;
                 newItem.LastModifiedDate = DateTimeOffset.Now;
                 currentItems.Add(newItem);
 
-                await UpdateTodoListInOneDrive(currentItems);
+                var updatedList = await UpdateTodoListInOneDrive(currentItems);
 
                 _logger.LogInformation($"Successfully added new item: {newItem.Title}");
+
+                return updatedList;
             }
             catch (Exception ex)
             {
@@ -134,11 +142,13 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        public async Task DeleteTodoItem(TodoItem itemToDelete)
+        public async Task<List<TodoItem>> DeleteTodoItem(TodoItem itemToDelete)
         {
             try
             {
                 _logger.LogInformation($"Attempting to delete todo item: {itemToDelete.Title}");
+
+                await GetFileContent(); // Ensure we have the latest content before deleting
 
                 var currentItems = await GetTodoListFromOneDrive();
                 var itemToRemove = currentItems.FirstOrDefault(i => i.Title == itemToDelete.Title && i.CreatedAt == itemToDelete.CreatedAt);
@@ -149,18 +159,34 @@ namespace MickeyUtilityWeb.Services
                     itemToRemove.DeletedDate = DateTime.Now;
                     itemToRemove.LastModifiedDate = DateTimeOffset.Now;
 
-                    await UpdateTodoListInOneDrive(currentItems);
+                    var updatedList = await UpdateTodoListInOneDrive(currentItems);
 
                     _logger.LogInformation($"Successfully marked item as deleted: {itemToDelete.Title}");
+
+                    return updatedList;
                 }
                 else
                 {
                     _logger.LogWarning($"Item not found for deletion: {itemToDelete.Title}");
+                    return currentItems;
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error deleting todo item: {itemToDelete.Title}");
+                throw;
+            }
+        }
+
+        private async Task<byte[]> GetFileContent()
+        {
+            try
+            {
+                return await _excelApiService.GetFileContent(FILE_ID);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting file content from OneDrive");
                 throw;
             }
         }

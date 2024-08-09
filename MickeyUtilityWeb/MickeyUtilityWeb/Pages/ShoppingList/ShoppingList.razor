@@ -1,10 +1,10 @@
-﻿@page "/todolist"
+﻿@page "/shoppinglist"
 @using MickeyUtilityWeb.Services
 @using MickeyUtilityWeb.Models
 @using MickeyUtilityWeb.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-@inject TodoListService TodoListService
+@inject ShoppingListService ShoppingListService
 @inject NavigationManager NavigationManager
 @inject IAccessTokenProvider TokenProvider
 @inject IJSRuntime JSRuntime
@@ -16,7 +16,7 @@
     <AuthorizeView>
         <Authorized>
             <div class="page-header">
-                <h1 class="page-title">To-Do List</h1>
+                <h1 class="page-title">Shopping List</h1>
                 <div class="flip-clock">
                     <div class="flip-clock-item">@DateTime.Now.ToString("HH")</div>
                     <div class="flip-clock-item">@DateTime.Now.ToString("mm")</div>
@@ -24,9 +24,9 @@
             </div>
 
             <div class="category-buttons">
-                <button class="category-btn @(currentFilter == "all" ? "active" : "")" @onclick="@(() => FilterTasks("all"))">All</button>
-                <button class="category-btn @(currentFilter == "completed" ? "active" : "")" @onclick="@(() => FilterTasks("completed"))">Completed</button>
-                <button class="category-btn @(currentFilter == "incomplete" ? "active" : "")" @onclick="@(() => FilterTasks("incomplete"))">Incomplete</button>
+                <button class="category-btn @(currentFilter == "all" ? "active" : "")" @onclick="@(() => FilterItems("all"))">All</button>
+                <button class="category-btn @(currentFilter == "purchased" ? "active" : "")" @onclick="@(() => FilterItems("purchased"))">Purchased</button>
+                <button class="category-btn @(currentFilter == "unpurchased" ? "active" : "")" @onclick="@(() => FilterItems("unpurchased"))">Unpurchased</button>
             </div>
 
             <div class="countdown-section">
@@ -67,11 +67,9 @@
             else
             {
                 <div class="form-grid">
-                    <input type="text" class="input-small" placeholder="Add a new task..." @bind="newItem.Title" @bind:event="oninput" />
-                    <input type="text" class="input-small" placeholder="Description" @bind="newItem.Description" />
-                    <input type="date" class="input-small" @bind="newItem.DueDate" />
+                    <input type="text" class="input-small" placeholder="Add a new item..." @bind="newItem.Name" @bind:event="oninput" />
+                    <input type="number" class="input-small" placeholder="Quantity" @bind="newItem.Quantity" />
                     <input type="text" class="input-small" placeholder="Category" @bind="newItem.Category" />
-                    <input type="text" class="input-small" placeholder="Subtask of" @bind="newItem.SubtaskOf" />
                     <button class="btn-primary" @onclick="AddNewItem">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -80,18 +78,16 @@
                 </div>
 
                 <ul class="item-list">
-                    @foreach (var item in FilteredTodoItems)
+                    @foreach (var item in FilteredShoppingItems)
                     {
-                        <li class="list-item @(item.IsCompleted ? "completed" : "") @(item.IsDeleted ? "deleted" : "")">
+                        <li class="list-item @(item.IsPurchased ? "completed" : "") @(item.IsDeleted ? "deleted" : "")">
                             <span class="item-category category-@item.Category.ToLower()">@item.Category</span>
                             @if (editingItem == item)
                             {
                                 <div class="edit-form">
-                                    <input type="text" class="edit-input" @bind="item.Title" />
-                                    <input type="text" class="edit-input" @bind="item.Description" />
-                                    <input type="date" class="edit-date" @bind="item.DueDate" />
+                                    <input type="text" class="edit-input" @bind="item.Name" />
+                                    <input type="number" class="edit-input" @bind="item.Quantity" />
                                     <input type="text" class="edit-input" @bind="item.Category" />
-                                    <input type="text" class="edit-input" @bind="item.SubtaskOf" />
                                     <div class="edit-actions">
                                         <button class="btn-save" @onclick="@(() => SaveEdit(item))">Save</button>
                                         <button class="btn-cancel" @onclick="CancelEdit">Cancel</button>
@@ -100,15 +96,10 @@
                             }
                             else
                             {
-                                <input type="checkbox" class="item-checkbox" checked="@item.IsCompleted" @onchange="@(() => ToggleCompleted(item))" />
+                                <input type="checkbox" class="item-checkbox" checked="@item.IsPurchased" @onchange="@(() => TogglePurchased(item))" />
                                 <div class="item-content">
-                                    <span class="item-text">@item.Title</span>
-                                    <span class="item-description">@item.Description</span>
-                                    <span class="item-date">@(item.DueDate?.ToString("MMM dd, yyyy"))</span>
-                                    @if (!string.IsNullOrEmpty(item.SubtaskOf))
-                                    {
-                                        <span class="item-subtask-of">Subtask of: @item.SubtaskOf</span>
-                                    }
+                                    <span class="item-text">@item.Name</span>
+                                    <span class="item-description">Quantity: @item.Quantity</span>
                                     <span class="item-created-at">Created: @item.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
                                     <span class="item-updated-at">Updated: @item.UpdatedAt.ToString("MMM dd, yyyy HH:mm")</span>
                                 </div>
@@ -132,7 +123,7 @@
             }
         </Authorized>
         <NotAuthorized>
-            <p class="unauthorized-message">You need to log in to access the todo list.</p>
+            <p class="unauthorized-message">You need to log in to access the shopping list.</p>
         </NotAuthorized>
     </AuthorizeView>
 </div>
@@ -140,19 +131,19 @@
 <Toast @ref="toast" />
 
 @code {
-    private List<TodoItem> todoItems = new List<TodoItem>();
-    private TodoItem newItem = new TodoItem { DueDate = DateTime.Today.AddDays(1) };
+    private List<ShoppingItem> shoppingItems = new List<ShoppingItem>();
+    private ShoppingItem newItem = new ShoppingItem { Quantity = 1 };
     private bool isLoading = true;
     private string errorMessage;
     private Toast toast;
-    private TodoItem editingItem;
+    private ShoppingItem editingItem;
     private string currentFilter = "all";
 
-    private IEnumerable<TodoItem> FilteredTodoItems => currentFilter switch
+    private IEnumerable<ShoppingItem> FilteredShoppingItems => currentFilter switch
     {
-        "completed" => todoItems.Where(item => item.IsCompleted && !item.IsDeleted),
-        "incomplete" => todoItems.Where(item => !item.IsCompleted && !item.IsDeleted),
-        _ => todoItems.Where(item => !item.IsDeleted)
+        "purchased" => shoppingItems.Where(item => item.IsPurchased && !item.IsDeleted),
+        "unpurchased" => shoppingItems.Where(item => !item.IsPurchased && !item.IsDeleted),
+        _ => shoppingItems.Where(item => !item.IsDeleted)
     };
 
     [CascadingParameter]
@@ -163,23 +154,23 @@
         var authState = await AuthenticationStateTask;
         if (authState.User.Identity.IsAuthenticated)
         {
-            await LoadTodoList();
+            await LoadShoppingList();
         }
     }
 
-    private async Task LoadTodoList()
+    private async Task LoadShoppingList()
     {
         isLoading = true;
         errorMessage = null;
         try
         {
-            todoItems = await TodoListService.GetTodoListFromOneDrive();
-            await toast.ShowToast("Todo list loaded successfully", "success");
+            shoppingItems = await ShoppingListService.GetShoppingListFromOneDrive();
+            await toast.ShowToast("Shopping list loaded successfully", "success");
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error loading todo list: {ex.Message}";
-            await toast.ShowToast("Failed to load todo list", "error");
+            errorMessage = $"Error loading shopping list: {ex.Message}";
+            await toast.ShowToast("Failed to load shopping list", "error");
         }
         finally
         {
@@ -187,77 +178,69 @@
         }
     }
 
-    private async Task ToggleCompleted(TodoItem item)
+    private async Task TogglePurchased(ShoppingItem item)
     {
-        item.IsCompleted = !item.IsCompleted;
+        item.IsPurchased = !item.IsPurchased;
         item.UpdatedAt = DateTimeOffset.Now;
         item.LastModifiedDate = DateTimeOffset.Now;
-        await UpdateTodoList();
-        await toast.ShowToast($"Task {(item.IsCompleted ? "completed" : "marked as incomplete")}", "info");
+        await UpdateShoppingList();
+        await toast.ShowToast($"Item {(item.IsPurchased ? "marked as purchased" : "marked as unpurchased")}", "info");
     }
 
-    private async Task RemoveItem(TodoItem item)
+    private async Task RemoveItem(ShoppingItem item)
     {
         try
         {
-            await TodoListService.DeleteTodoItem(item);
-            todoItems.RemoveAll(i => i.Title == item.Title && i.CreatedAt == item.CreatedAt);
+            await ShoppingListService.DeleteShoppingItem(item);
+            shoppingItems.RemoveAll(i => i.Name == item.Name && i.CreatedAt == item.CreatedAt);
             errorMessage = null;
-            await toast.ShowToast("Task removed successfully", "success");
+            await toast.ShowToast("Item removed successfully", "success");
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error deleting task: {ex.Message}";
-            await toast.ShowToast("Failed to remove task", "error");
+            errorMessage = $"Error deleting item: {ex.Message}";
+            await toast.ShowToast("Failed to remove item", "error");
         }
     }
 
     private async Task AddNewItem()
     {
-        if (string.IsNullOrWhiteSpace(newItem.Title))
+        if (string.IsNullOrWhiteSpace(newItem.Name))
         {
-            await toast.ShowToast("Task title is required", "error");
+            await toast.ShowToast("Item name is required", "error");
             return;
         }
-
-        // Check if a task with the same title already exists
-        if (todoItems.Any(item => item.Title.Equals(newItem.Title, StringComparison.OrdinalIgnoreCase)))
-        {
-            await toast.ShowToast("A task with this title already exists", "error");
-            return;
-        }
-
         try
         {
             newItem.CreatedAt = DateTimeOffset.Now;
             newItem.UpdatedAt = DateTimeOffset.Now;
             newItem.LastModifiedDate = DateTimeOffset.Now;
-            await TodoListService.AddTodoItem(newItem);
-            todoItems.Add(newItem);
-            newItem = new TodoItem { DueDate = DateTime.Today.AddDays(1) };
+            await ShoppingListService.AddShoppingItem(newItem);
+            shoppingItems.Add(newItem);
+            newItem = new ShoppingItem { Quantity = 1 };
             errorMessage = null;
-            await UpdateTodoList();
-            await toast.ShowToast("New task added successfully", "success");
+            await UpdateShoppingList();
+            await toast.ShowToast("New item added successfully", "success");
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error adding new task: {ex.Message}";
-            await toast.ShowToast("Failed to add new task", "error");
+            errorMessage = $"Error adding new item: {ex.Message}";
+            await toast.ShowToast("Failed to add new item", "error");
         }
     }
 
-    private async Task UpdateTodoList()
+    private async Task UpdateShoppingList()
     {
         try
         {
-            await TodoListService.UpdateTodoListInOneDrive(todoItems);
+            await ShoppingListService.UpdateShoppingListInOneDrive(shoppingItems);
             errorMessage = null;
-            await toast.ShowToast("Todo list updated successfully", "success");
+            await toast.ShowToast("Shopping list updated successfully", "success");
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error updating todo list: {ex.Message}";
-            await toast.ShowToast("Failed to update todo list", "error");
+            errorMessage = $"Error updating shopping list: {ex.Message}";
+            await toast.ShowToast("Failed to update shopping list", "error");
         }
     }
 
@@ -266,7 +249,7 @@
         NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
     }
 
-    private void StartEdit(TodoItem item)
+    private void StartEdit(ShoppingItem item)
     {
         editingItem = item;
     }
@@ -276,16 +259,16 @@
         editingItem = null;
     }
 
-    private async Task SaveEdit(TodoItem item)
+    private async Task SaveEdit(ShoppingItem item)
     {
         item.UpdatedAt = DateTimeOffset.Now;
         item.LastModifiedDate = DateTimeOffset.Now;
         editingItem = null;
-        await UpdateTodoList();
-        await toast.ShowToast("Task updated successfully", "success");
+        await UpdateShoppingList();
+        await toast.ShowToast("Item updated successfully", "success");
     }
 
-    private void FilterTasks(string filter)
+    private void FilterItems(string filter)
     {
         currentFilter = filter;
     }

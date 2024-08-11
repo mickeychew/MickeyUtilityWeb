@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "MickeyUtilityWeb",
   "resources": {
-    "hash": "sha256-BvW5455fPkt5q4zEnUFImyqfBTOs0rJVdABz/eTsjBo=",
+    "hash": "sha256-oBlync56z7tn2jfdwvuskoZriCdi+b2LYA+zBUx8V/Y=",
     "jsModuleNative": {
       "dotnet.native.8.0.7.pvkr2na9g4.js": "sha256-tFsxPBbhkdn6GKNBKvCRLzrfAHdyM86odYTe0MtrwMk="
     },
@@ -20,10 +20,10 @@
       "EPPlus.Interfaces.wasm": "sha256-1ivxaRqKUyyRIttdHUKXxddIGDaEU4AlyiD+ktlQwnM=",
       "EPPlus.System.Drawing.wasm": "sha256-zbq4Ro3GsS6aTeZsp6yNt+7JhXELs77az4ead5N8rGw=",
       "EPPlus.wasm": "sha256-q5WTa1AP70P8ksZAzx4VxqMTj05hp2NPHujAhdGx/4w=",
-      "MickeyUtilityWeb.wasm": "sha256-jXxhRvLXDOwEmq6vhoX/mttr+1rcdWug8oqS5hAMN5A=",
+      "MickeyUtilityWeb.wasm": "sha256-puJm+FKiauY1AsET4pbIIpdJj7voOaK+/XkuMzjloj8=",
       "Microsoft.AspNetCore.Authorization.wasm": "sha256-TXs+MpElGDjgqiBeIxMXMYMCVm0P64rDfQcU000/x18=",
       "Microsoft.AspNetCore.Components.Authorization.wasm": "sha256-WToepQ0BtcGyJwxXuw0dGKHWiWSqLMBE2X+Xy8whUb0=",
-      "Microsoft.AspNetCore.Components.wasm": "sha256-dQ4JznwOb5Qy0fhBti1MtqPTMOQ5baXsl9rToERE8/4=",
+      "Microsoft.AspNetCore.Components.wasm": "sha256-pCyprmKVGbJ0vMhIpspwGe7hzzXNnm7PE89np8qrWBE=",
       "Microsoft.AspNetCore.Components.Web.wasm": "sha256-AAZfde12uDAFifRybTQLepSGkSBNc2IwCzCZNbsiAlE=",
       "Microsoft.AspNetCore.Components.WebAssembly.Authentication.wasm": "sha256-iu6j+XQVnFwiYOR6+1xSkoY5UetgFcAhKydi1wlczbM=",
       "Microsoft.AspNetCore.Components.WebAssembly.wasm": "sha256-7cCb6MwyASmYPChVG3QG3XLGDsGmAlDpuMDbsrUVD8I=",
@@ -64,7 +64,7 @@
       "System.Formats.Asn1.wasm": "sha256-MGO1hnuK/nn0PACZmmcDHUs3DukYHxzJOTblZfdO3Pw=",
       "System.IO.FileSystem.Watcher.wasm": "sha256-2GnAowT7vQOzc/PMlwLnZbxPI+7d9RrVcqIpZ1GZXQI=",
       "System.Linq.Expressions.wasm": "sha256-+7M0wnWdIOmpOXWl2cnfTXmgPZf56NBwZjB2747jcwM=",
-      "System.Linq.wasm": "sha256-oBwkChH33Vvz8YeF7d8rWAjEsMBzItE3OpCsH7z/M4o=",
+      "System.Linq.wasm": "sha256-BK9Bw4xZvr542+hsQYrO3EPn9b3x1RdT937QnM2wkgA=",
       "System.Memory.wasm": "sha256-QSpKxyoLJ6G4e/lasyZ5BLbBbDWGeOb6r36Fxdq7Tck=",
       "System.Net.Http.Json.wasm": "sha256-/aTu6H7GhVXyFrOqCpxU4DwvkNdi2BKDvmNolBuCbko=",
       "System.Net.Http.wasm": "sha256-JjF9zPY2wxCYcZAKXR3wgMEIcM94muiGnHheRMsxbw0=",

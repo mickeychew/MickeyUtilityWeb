@@ -71,7 +71,13 @@
                     <input type="text" class="input-small" placeholder="Description" @bind="newItem.Description" />
                     <input type="date" class="input-small" @bind="newItem.DueDate" />
                     <input type="text" class="input-small" placeholder="Category" @bind="newItem.Category" />
-                    <input type="text" class="input-small" placeholder="Subtask of" @bind="newItem.SubtaskOf" />
+                    <select class="input-small" @bind="newItem.ParentTaskId">
+                        <option value="">No Parent Task</option>
+                        @foreach (var item in todoItems.Where(i => string.IsNullOrEmpty(i.ParentTaskId)))
+                        {
+                            <option value="@item.ID">@item.Title</option>
+                        }
+                    </select>
                     <button class="btn-primary" @onclick="AddNewItem">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -80,51 +86,20 @@
                 </div>
 
                 <ul class="item-list">
-                    @foreach (var item in FilteredTodoItems)
+                    @foreach (var item in FilteredTodoItems.Where(i => string.IsNullOrEmpty(i.ParentTaskId)))
                     {
                         <li class="list-item @(item.IsCompleted ? "completed" : "") @(item.IsDeleted ? "deleted" : "")">
-                            <span class="item-category category-@item.Category.ToLower()">@item.Category</span>
-                            @if (editingItem == item)
+                            @RenderTodoItem(item)
+                            @if (todoItems.Any(i => i.ParentTaskId == item.ID))
                             {
-                                <div class="edit-form">
-                                    <input type="text" class="edit-input" @bind="item.Title" />
-                                    <input type="text" class="edit-input" @bind="item.Description" />
-                                    <input type="date" class="edit-date" @bind="item.DueDate" />
-                                    <input type="text" class="edit-input" @bind="item.Category" />
-                                    <input type="text" class="edit-input" @bind="item.SubtaskOf" />
-                                    <div class="edit-actions">
-                                        <button class="btn-save" @onclick="@(() => SaveEdit(item))">Save</button>
-                                        <button class="btn-cancel" @onclick="CancelEdit">Cancel</button>
-                                    </div>
-                                </div>
-                            }
-                            else
-                            {
-                                <input type="checkbox" class="item-checkbox" checked="@item.IsCompleted" @onchange="@(() => ToggleCompleted(item))" />
-                                <div class="item-content">
-                                    <span class="item-text">@item.Title</span>
-                                    <span class="item-description">@item.Description</span>
-                                    <span class="item-date">@(item.DueDate?.ToString("MMM dd, yyyy"))</span>
-                                    @if (!string.IsNullOrEmpty(item.SubtaskOf))
+                                <ul class="subtask-list">
+                                    @foreach (var subtask in todoItems.Where(i => i.ParentTaskId == item.ID))
                                     {
-                                        <span class="item-subtask-of">Subtask of: @item.SubtaskOf</span>
+                                        <li class="list-item subtask @(subtask.IsCompleted ? "completed" : "") @(subtask.IsDeleted ? "deleted" : "")">
+                                            @RenderTodoItem(subtask)
+                                        </li>
                                     }
-                                    <span class="item-created-at">Created: @item.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
-                                    <span class="item-updated-at">Updated: @item.UpdatedAt.ToString("MMM dd, yyyy HH:mm")</span>
-                                </div>
-                                <div class="item-actions">
-                                    <button class="btn-edit" @onclick="@(() => StartEdit(item))">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                            <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                        </svg>
-                                    </button>
-                                    <button class="btn-delete" @onclick="@(() => RemoveItem(item))">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M3 6H5H21M19 6V20C19 21.1046 18.1046 22 17 22H7C5.89543 22 5 21.1046 5 20V6M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                        </svg>
-                                    </button>
-                                </div>
+                                </ul>
                             }
                         </li>
                     }
@@ -201,7 +176,7 @@
         try
         {
             await TodoListService.DeleteTodoItem(item);
-            todoItems.RemoveAll(i => i.Title == item.Title && i.CreatedAt == item.CreatedAt);
+            todoItems.RemoveAll(i => i.ID == item.ID);
             errorMessage = null;
             await toast.ShowToast("Task removed successfully", "success");
         }
@@ -221,7 +196,7 @@
         }
 
         // Check if a task with the same title already exists
-        if (todoItems.Any(item => item.Title.Equals(newItem.Title, StringComparison.OrdinalIgnoreCase)))
+        if (todoItems.Any(item => item.Title.Equals(newItem.Title, StringComparison.OrdinalIgnoreCase) && item.ParentTaskId == newItem.ParentTaskId))
         {
             await toast.ShowToast("A task with this title already exists", "error");
             return;
@@ -229,14 +204,9 @@
 
         try
         {
-            newItem.CreatedAt = DateTimeOffset.Now;
-            newItem.UpdatedAt = DateTimeOffset.Now;
-            newItem.LastModifiedDate = DateTimeOffset.Now;
-            await TodoListService.AddTodoItem(newItem);
-            todoItems.Add(newItem);
+            todoItems = await TodoListService.AddTodoItem(newItem);
             newItem = new TodoItem { DueDate = DateTime.Today.AddDays(1) };
             errorMessage = null;
-            await UpdateTodoList();
             await toast.ShowToast("New task added successfully", "success");
         }
         catch (Exception ex)
@@ -250,7 +220,7 @@
     {
         try
         {
-            await TodoListService.UpdateTodoListInOneDrive(todoItems);
+            todoItems = await TodoListService.UpdateTodoListInOneDrive(todoItems);
             errorMessage = null;
             await toast.ShowToast("Todo list updated successfully", "success");
         }
@@ -317,4 +287,57 @@
     }
 
     private int GetDayProgress() => (int)((DateTime.Now.TimeOfDay.TotalSeconds / 86400) * 100);
+
+    private RenderFragment RenderTodoItem(TodoItem item) => __builder =>
+    {
+        <span class="item-category category-@item.Category.ToLower()">@item.Category</span>
+        @if (editingItem == item)
+        {
+            <div class="edit-form">
+                <input type="text" class="edit-input" @bind="item.Title" />
+                <input type="text" class="edit-input" @bind="item.Description" />
+                <input type="date" class="edit-date" @bind="item.DueDate" />
+                <input type="text" class="edit-input" @bind="item.Category" />
+                <select class="edit-input" @bind="item.ParentTaskId">
+                    <option value="">No Parent Task</option>
+                    @foreach (var parentItem in todoItems.Where(i => string.IsNullOrEmpty(i.ParentTaskId) && i.ID != item.ID))
+                    {
+                        <option value="@parentItem.ID">@parentItem.Title</option>
+                    }
+                </select>
+                <div class="edit-actions">
+                    <button class="btn-save" @onclick="@(() => SaveEdit(item))">Save</button>
+                    <button class="btn-cancel" @onclick="CancelEdit">Cancel</button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <input type="checkbox" class="item-checkbox" checked="@item.IsCompleted" @onchange="@(() => ToggleCompleted(item))" />
+            <div class="item-content">
+                <span class="item-text">@item.Title</span>
+                <span class="item-description">@item.Description</span>
+                <span class="item-date">@(item.DueDate?.ToString("MMM dd, yyyy"))</span>
+                @if (!string.IsNullOrEmpty(item.ParentTaskId))
+                {
+                    <span class="item-subtask-of">Subtask of: @(todoItems.FirstOrDefault(i => i.ID == item.ParentTaskId)?.Title ?? "Unknown")</span>
+                }
+                <span class="item-created-at">Created: @item.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                <span class="item-updated-at">Updated: @item.UpdatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+            </div>
+            <div class="item-actions">
+                <button class="btn-edit" @onclick="@(() => StartEdit(item))">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="btn-delete" @onclick="@(() => RemoveItem(item))">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 6H5H21M19 6V20C19 21.1046 18.1046 22 17 22H7C5.89543 22 5 21.1046 5 20V6M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+            </div>
+        }
+    };
 }

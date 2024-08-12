@@ -31,18 +31,17 @@ namespace MickeyUtilityWeb.Services
 
                 var updateData = new List<object[]>
                 {
-                    new object[] { "ID", "Title", "Description", "DueDate", "IsCompleted", "Category", "ParentTaskId", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
+                    new object[] { "Title", "Description", "DueDate", "IsCompleted", "Category", "SubtaskOf", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
                 };
 
                 updateData.AddRange(todoList.Select(item => new object[]
                 {
-                    item.ID,
                     item.Title,
                     item.Description,
                     item.DueDate?.ToString("yyyy-MM-ddTHH:mm:sszzz"),
                     item.IsCompleted,
                     item.Category,
-                    item.ParentTaskId,
+                    item.SubtaskOf,
                     item.CreatedAt.ToString("yyyy-MM-ddTHH:mm:sszzz"),
                     item.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:sszzz"),
                     item.IsDeleted,
@@ -52,10 +51,10 @@ namespace MickeyUtilityWeb.Services
 
                 while (updateData.Count < currentRows)
                 {
-                    updateData.Add(new object[12]);
+                    updateData.Add(new object[11]);
                 }
 
-                string rangeAddress = $"{WORKSHEET_NAME}!A1:L{Math.Max(currentRows, updateData.Count)}";
+                string rangeAddress = $"{WORKSHEET_NAME}!A1:K{Math.Max(currentRows, updateData.Count)}";
 
                 await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
 
@@ -89,18 +88,17 @@ namespace MickeyUtilityWeb.Services
                     {
                         var item = new TodoItem
                         {
-                            ID = worksheet.Cells[row, 1].Value?.ToString(),
-                            Title = worksheet.Cells[row, 2].Value?.ToString(),
-                            Description = worksheet.Cells[row, 3].Value?.ToString(),
-                            DueDate = DateTime.TryParse(worksheet.Cells[row, 4].Value?.ToString(), out var dueDate) ? dueDate : (DateTime?)null,
-                            IsCompleted = bool.Parse(worksheet.Cells[row, 5].Value?.ToString() ?? "false"),
-                            Category = worksheet.Cells[row, 6].Value?.ToString() ?? "Uncategorized",
-                            ParentTaskId = worksheet.Cells[row, 7].Value?.ToString(),
-                            CreatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 8].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
-                            UpdatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 9].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
-                            IsDeleted = bool.Parse(worksheet.Cells[row, 10].Value?.ToString() ?? "false"),
-                            LastModifiedDate = DateTimeOffset.Parse(worksheet.Cells[row, 11].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
-                            DeletedDate = DateTime.TryParse(worksheet.Cells[row, 12].Value?.ToString(), out var deletedDate) ? deletedDate : (DateTime?)null
+                            Title = worksheet.Cells[row, 1].Value?.ToString(),
+                            Description = worksheet.Cells[row, 2].Value?.ToString(),
+                            DueDate = DateTime.TryParse(worksheet.Cells[row, 3].Value?.ToString(), out var dueDate) ? dueDate : (DateTime?)null,
+                            IsCompleted = bool.Parse(worksheet.Cells[row, 4].Value?.ToString() ?? "false"),
+                            Category = worksheet.Cells[row, 5].Value?.ToString() ?? "Uncategorized",
+                            SubtaskOf = worksheet.Cells[row, 6].Value?.ToString(),
+                            CreatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 7].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
+                            UpdatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 8].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
+                            IsDeleted = bool.Parse(worksheet.Cells[row, 9].Value?.ToString() ?? "false"),
+                            LastModifiedDate = DateTimeOffset.Parse(worksheet.Cells[row, 10].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
+                            DeletedDate = DateTime.TryParse(worksheet.Cells[row, 11].Value?.ToString(), out var deletedDate) ? deletedDate : (DateTime?)null
                         };
 
                         if (!string.IsNullOrWhiteSpace(item.Title))
@@ -126,7 +124,6 @@ namespace MickeyUtilityWeb.Services
                 await GetFileContent(); // Ensure we have the latest content before adding
 
                 var currentItems = await GetTodoListFromOneDrive();
-                newItem.ID = await GenerateId(newItem.ParentTaskId);
                 newItem.CreatedAt = DateTimeOffset.Now;
                 newItem.UpdatedAt = DateTimeOffset.Now;
                 newItem.LastModifiedDate = DateTimeOffset.Now;
@@ -154,7 +151,7 @@ namespace MickeyUtilityWeb.Services
                 await GetFileContent(); // Ensure we have the latest content before deleting
 
                 var currentItems = await GetTodoListFromOneDrive();
-                var itemToRemove = currentItems.FirstOrDefault(i => i.ID == itemToDelete.ID);
+                var itemToRemove = currentItems.FirstOrDefault(i => i.Title == itemToDelete.Title && i.CreatedAt == itemToDelete.CreatedAt);
 
                 if (itemToRemove != null)
                 {
@@ -192,18 +189,6 @@ namespace MickeyUtilityWeb.Services
                 _logger.LogError(ex, "Error getting file content from OneDrive");
                 throw;
             }
-        }
-
-        private async Task<string> GenerateId(string parentTaskId)
-        {
-            var currentItems = await GetTodoListFromOneDrive();
-            string prefix = string.IsNullOrEmpty(parentTaskId) ? "MTS" : "STS";
-            int maxNumber = currentItems
-                .Where(i => i.ID.StartsWith(prefix))
-                .Select(i => int.TryParse(i.ID.Substring(3), out int num) ? num : 0)
-                .DefaultIfEmpty(0)
-                .Max();
-            return $"{prefix}{maxNumber + 1}";
         }
     }
 }

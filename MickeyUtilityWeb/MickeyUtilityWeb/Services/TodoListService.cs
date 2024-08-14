@@ -31,30 +31,31 @@ namespace MickeyUtilityWeb.Services
 
                 var updateData = new List<object[]>
                 {
-                    new object[] { "Title", "Description", "DueDate", "IsCompleted", "Category", "SubtaskOf", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
+                    new object[] { "ID", "Title", "Description", "DueDate", "IsCompleted", "Category", "ParentTaskId", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
                 };
 
                 updateData.AddRange(todoList.Select(item => new object[]
                 {
-                    item.Title,
-                    item.Description,
-                    item.DueDate?.ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                    item.IsCompleted,
-                    item.Category,
-                    item.SubtaskOf,
-                    item.CreatedAt.ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                    item.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                    item.IsDeleted,
-                    item.LastModifiedDate.ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                    item.DeletedDate?.ToString("yyyy-MM-ddTHH:mm:sszzz")
+                      item.ID,
+                item.Title,
+                item.Description,
+                item.DueDate?.ToString("MM/dd/yyyy HH:mm"),
+                item.IsCompleted,
+                item.Category,
+                item.ParentTaskId,
+                item.CreatedAt.ToString("MM/dd/yyyy HH:mm"),
+                item.UpdatedAt.ToString("MM/dd/yyyy HH:mm"),
+                item.IsDeleted,
+                item.LastModifiedDate.ToString("MM/dd/yyyy HH:mm"),
+                item.DeletedDate?.ToString("MM/dd/yyyy HH:mm")
                 }));
 
                 while (updateData.Count < currentRows)
                 {
-                    updateData.Add(new object[11]);
+                    updateData.Add(new object[12]);
                 }
 
-                string rangeAddress = $"{WORKSHEET_NAME}!A1:K{Math.Max(currentRows, updateData.Count)}";
+                string rangeAddress = $"{WORKSHEET_NAME}!A1:L{Math.Max(currentRows, updateData.Count)}";
 
                 await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
 
@@ -88,17 +89,18 @@ namespace MickeyUtilityWeb.Services
                     {
                         var item = new TodoItem
                         {
-                            Title = worksheet.Cells[row, 1].Value?.ToString(),
-                            Description = worksheet.Cells[row, 2].Value?.ToString(),
-                            DueDate = DateTime.TryParse(worksheet.Cells[row, 3].Value?.ToString(), out var dueDate) ? dueDate : (DateTime?)null,
-                            IsCompleted = bool.Parse(worksheet.Cells[row, 4].Value?.ToString() ?? "false"),
-                            Category = worksheet.Cells[row, 5].Value?.ToString() ?? "Uncategorized",
-                            SubtaskOf = worksheet.Cells[row, 6].Value?.ToString(),
-                            CreatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 7].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
-                            UpdatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 8].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
-                            IsDeleted = bool.Parse(worksheet.Cells[row, 9].Value?.ToString() ?? "false"),
-                            LastModifiedDate = DateTimeOffset.Parse(worksheet.Cells[row, 10].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
-                            DeletedDate = DateTime.TryParse(worksheet.Cells[row, 11].Value?.ToString(), out var deletedDate) ? deletedDate : (DateTime?)null
+                            ID = worksheet.Cells[row, 1].Value?.ToString(),
+                            Title = worksheet.Cells[row, 2].Value?.ToString(),
+                            Description = worksheet.Cells[row, 3].Value?.ToString(),
+                            DueDate = DateTimeOffset.TryParse(worksheet.Cells[row, 4].Value?.ToString(), out var dueDate) ? dueDate : (DateTimeOffset?)null,
+                            IsCompleted = bool.Parse(worksheet.Cells[row, 5].Value?.ToString() ?? "false"),
+                            Category = worksheet.Cells[row, 6].Value?.ToString() ?? "Uncategorized",
+                            ParentTaskId = worksheet.Cells[row, 7].Value?.ToString(),
+                            CreatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 8].Value?.ToString() ?? DateTimeOffset.Now.ToString("MM/dd/yyyy HH:mm")),
+                            UpdatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 9].Value?.ToString() ?? DateTimeOffset.Now.ToString("MM/dd/yyyy HH:mm")),
+                            IsDeleted = bool.Parse(worksheet.Cells[row, 10].Value?.ToString() ?? "false"),
+                            LastModifiedDate = DateTimeOffset.Parse(worksheet.Cells[row, 11].Value?.ToString() ?? DateTimeOffset.Now.ToString("MM/dd/yyyy HH:mm")),
+                            DeletedDate = DateTimeOffset.TryParse(worksheet.Cells[row, 12].Value?.ToString(), out var deletedDate) ? deletedDate : (DateTimeOffset?)null
                         };
 
                         if (!string.IsNullOrWhiteSpace(item.Title))
@@ -124,6 +126,7 @@ namespace MickeyUtilityWeb.Services
                 await GetFileContent(); // Ensure we have the latest content before adding
 
                 var currentItems = await GetTodoListFromOneDrive();
+                newItem.ID = GenerateNewId(currentItems, string.IsNullOrEmpty(newItem.ParentTaskId));
                 newItem.CreatedAt = DateTimeOffset.Now;
                 newItem.UpdatedAt = DateTimeOffset.Now;
                 newItem.LastModifiedDate = DateTimeOffset.Now;
@@ -151,7 +154,7 @@ namespace MickeyUtilityWeb.Services
                 await GetFileContent(); // Ensure we have the latest content before deleting
 
                 var currentItems = await GetTodoListFromOneDrive();
-                var itemToRemove = currentItems.FirstOrDefault(i => i.Title == itemToDelete.Title && i.CreatedAt == itemToDelete.CreatedAt);
+                var itemToRemove = currentItems.FirstOrDefault(i => i.ID == itemToDelete.ID);
 
                 if (itemToRemove != null)
                 {
@@ -189,6 +192,17 @@ namespace MickeyUtilityWeb.Services
                 _logger.LogError(ex, "Error getting file content from OneDrive");
                 throw;
             }
+        }
+
+        private string GenerateNewId(List<TodoItem> currentItems, bool isMainTask)
+        {
+            string prefix = isMainTask ? "MTS" : "STS";
+            int maxId = currentItems
+                .Where(item => item.ID.StartsWith(prefix))
+                .Select(item => int.TryParse(item.ID.Substring(3), out int id) ? id : 0)
+                .DefaultIfEmpty(0)
+                .Max();
+            return $"{prefix}{maxId + 1}";
         }
     }
 }

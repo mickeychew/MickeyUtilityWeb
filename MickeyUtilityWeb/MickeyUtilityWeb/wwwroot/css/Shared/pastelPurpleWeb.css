@@ -238,7 +238,7 @@ body {
     gap: 10px;
 }
 
-.btn-edit, .btn-delete {
+.btn-edit, .btn-delete, .btn-toggle-subtasks {
     background: none;
     border: none;
     cursor: pointer;
@@ -247,7 +247,7 @@ body {
     transition: var(--transition);
 }
 
-    .btn-edit:hover, .btn-delete:hover {
+    .btn-edit:hover, .btn-delete:hover, .btn-toggle-subtasks:hover {
         color: var(--pastel-primary);
         transform: scale(1.1);
     }
@@ -306,6 +306,24 @@ body {
     border-radius: 50%;
     border-top-color: var(--pastel-primary);
     animation: spin 1s ease-in-out infinite;
+}
+
+/* New styles for subtasks */
+.subtask-list {
+    list-style-type: none;
+    padding-left: 20px;
+    margin-top: 10px;
+}
+
+.subtask-item {
+    margin-left: 20px;
+    border-left: 2px solid var(--pastel-secondary);
+    padding-left: 15px;
+}
+
+.btn-toggle-subtasks {
+    font-size: 1.2em;
+    font-weight: bold;
 }
 
 @keyframes spin {

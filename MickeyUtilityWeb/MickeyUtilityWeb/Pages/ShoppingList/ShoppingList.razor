@@ -26,7 +26,7 @@
             <div class="category-buttons">
                 <button class="category-btn @(currentFilter == "all" ? "active" : "")" @onclick="@(() => FilterItems("all"))">All</button>
                 <button class="category-btn @(currentFilter == "purchased" ? "active" : "")" @onclick="@(() => FilterItems("purchased"))">Purchased</button>
-                <button class="category-btn @(currentFilter == "unpurchased" ? "active" : "")" @onclick="@(() => FilterItems("unpurchased"))">Unpurchased</button>
+                <button class="category-btn @(currentFilter == "not-purchased" ? "active" : "")" @onclick="@(() => FilterItems("not-purchased"))">Not Purchased</button>
             </div>
 
             <div class="countdown-section">
@@ -99,9 +99,9 @@
                                 <input type="checkbox" class="item-checkbox" checked="@item.IsPurchased" @onchange="@(() => TogglePurchased(item))" />
                                 <div class="item-content">
                                     <span class="item-text">@item.Name</span>
-                                    <span class="item-description">Quantity: @item.Quantity</span>
-                                    <span class="item-created-at">Created: @item.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
-                                    <span class="item-updated-at">Updated: @item.UpdatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                                    <span class="item-quantity">Quantity: @item.Quantity</span>
+                                    <span class="item-created-at">Created: @item.CreatedAt.ToString("MM/dd/yyyy HH:mm:ss")</span>
+                                    <span class="item-updated-at">Updated: @item.UpdatedAt.ToString("MM/dd/yyyy HH:mm:ss")</span>
                                 </div>
                                 <div class="item-actions">
                                     <button class="btn-edit" @onclick="@(() => StartEdit(item))">
@@ -142,7 +142,7 @@
     private IEnumerable<ShoppingItem> FilteredShoppingItems => currentFilter switch
     {
         "purchased" => shoppingItems.Where(item => item.IsPurchased && !item.IsDeleted),
-        "unpurchased" => shoppingItems.Where(item => !item.IsPurchased && !item.IsDeleted),
+        "not-purchased" => shoppingItems.Where(item => !item.IsPurchased && !item.IsDeleted),
         _ => shoppingItems.Where(item => !item.IsDeleted)
     };
 
@@ -184,15 +184,14 @@
         item.UpdatedAt = DateTimeOffset.Now;
         item.LastModifiedDate = DateTimeOffset.Now;
         await UpdateShoppingList();
-        await toast.ShowToast($"Item {(item.IsPurchased ? "marked as purchased" : "marked as unpurchased")}", "info");
+        await toast.ShowToast($"Item {(item.IsPurchased ? "marked as purchased" : "unmarked as purchased")}", "info");
     }
 
     private async Task RemoveItem(ShoppingItem item)
     {
         try
         {
-            await ShoppingListService.DeleteShoppingItem(item);
-            shoppingItems.RemoveAll(i => i.Name == item.Name && i.CreatedAt == item.CreatedAt);
+            shoppingItems = await ShoppingListService.DeleteShoppingItem(item);
             errorMessage = null;
             await toast.ShowToast("Item removed successfully", "success");
         }
@@ -210,16 +209,15 @@
             await toast.ShowToast("Item name is required", "error");
             return;
         }
+
         try
         {
             newItem.CreatedAt = DateTimeOffset.Now;
             newItem.UpdatedAt = DateTimeOffset.Now;
             newItem.LastModifiedDate = DateTimeOffset.Now;
-            await ShoppingListService.AddShoppingItem(newItem);
-            shoppingItems.Add(newItem);
+            shoppingItems = await ShoppingListService.AddShoppingItem(newItem);
             newItem = new ShoppingItem { Quantity = 1 };
             errorMessage = null;
-            await UpdateShoppingList();
             await toast.ShowToast("New item added successfully", "success");
         }
         catch (Exception ex)
@@ -233,7 +231,7 @@
     {
         try
         {
-            await ShoppingListService.UpdateShoppingListInOneDrive(shoppingItems);
+            shoppingItems = await ShoppingListService.UpdateShoppingListInOneDrive(shoppingItems);
             errorMessage = null;
             await toast.ShowToast("Shopping list updated successfully", "success");
         }
@@ -284,7 +282,7 @@
     private int GetYearProgress()
     {
         var now = DateTime.Now;
-        return (int)((now - new DateTime(now.Year, 1, 1)).TotalDays / (now.Year % 4 == 0 ? 366.0 : 365.0) * 100);
+        return (int)((now - new DateTime(now.Year, 1, 1)).TotalDays / (DateTime.IsLeapYear(now.Year) ? 366.0 : 365.0) * 100);
     }
 
     private int GetMonthProgress()
@@ -296,8 +294,11 @@
     private int GetWeekProgress()
     {
         var now = DateTime.Now;
-        return (int)((now.DayOfWeek - DayOfWeek.Sunday) / 7.0 * 100);
+        return (int)((int)now.DayOfWeek / 7.0 * 100);
     }
 
-    private int GetDayProgress() => (int)((DateTime.Now.TimeOfDay.TotalSeconds / 86400) * 100);
+    private int GetDayProgress()
+    {
+        return (int)((DateTime.Now.TimeOfDay.TotalSeconds / 86400) * 100);
+    }
 }

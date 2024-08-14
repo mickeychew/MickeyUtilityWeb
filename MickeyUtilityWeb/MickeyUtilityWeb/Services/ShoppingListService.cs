@@ -21,41 +21,46 @@ namespace MickeyUtilityWeb.Services
             _logger = logger;
         }
 
-        public async Task UpdateShoppingListInOneDrive(List<ShoppingItem> shoppingList)
+        public async Task<List<ShoppingItem>> UpdateShoppingListInOneDrive(List<ShoppingItem> shoppingList)
         {
             try
             {
-                await GetFileContent();
+                await GetFileContent(); // Ensure we have the latest content before updating
+
                 var (currentRows, _, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
                 {
-                    new object[] { "Name", "Quantity", "Category", "IsPurchased", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
+                    new object[] { "ID", "Name", "Quantity", "Category", "IsPurchased", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
                 };
 
                 updateData.AddRange(shoppingList.Select(item => new object[]
                 {
+                    item.ID,
                     item.Name,
                     item.Quantity,
                     item.Category,
                     item.IsPurchased,
-                    item.CreatedAt.ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                    item.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:sszzz"),
+                    item.CreatedAt.ToString("MM/dd/yyyy HH:mm"),
+                    item.UpdatedAt.ToString("MM/dd/yyyy HH:mm"),
                     item.IsDeleted,
-                    item.LastModifiedDate.ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                    item.DeletedDate?.ToString("yyyy-MM-ddTHH:mm:sszzz")
+                    item.LastModifiedDate.ToString("MM/dd/yyyy HH:mm"),
+                    item.DeletedDate?.ToString("MM/dd/yyyy HH:mm")
                 }));
 
                 while (updateData.Count < currentRows)
                 {
-                    updateData.Add(new object[9]);
+                    updateData.Add(new object[10]);
                 }
 
-                string rangeAddress = $"{WORKSHEET_NAME}!A1:I{Math.Max(currentRows, updateData.Count)}";
+                string rangeAddress = $"{WORKSHEET_NAME}!A1:J{Math.Max(currentRows, updateData.Count)}";
 
                 await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
 
                 _logger.LogInformation("Successfully updated shopping list in OneDrive");
+
+                // Return the updated list
+                return await GetShoppingListFromOneDrive();
             }
             catch (Exception ex)
             {
@@ -63,23 +68,12 @@ namespace MickeyUtilityWeb.Services
                 throw;
             }
         }
-        private async Task<byte[]> GetFileContent()
-        {
-            try
-            {
-                return await _excelApiService.GetFileContent(FILE_ID);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting file content from OneDrive");
-                throw;
-            }
-        }
+
         public async Task<List<ShoppingItem>> GetShoppingListFromOneDrive()
         {
             try
             {
-                var excelContent = await _excelApiService.GetFileContent(FILE_ID);
+                var excelContent = await GetFileContent();
 
                 using (var stream = new MemoryStream(excelContent))
                 using (var package = new ExcelPackage(stream))
@@ -93,15 +87,16 @@ namespace MickeyUtilityWeb.Services
                     {
                         var item = new ShoppingItem
                         {
-                            Name = worksheet.Cells[row, 1].Value?.ToString(),
-                            Quantity = int.Parse(worksheet.Cells[row, 2].Value?.ToString() ?? "0"),
-                            Category = worksheet.Cells[row, 3].Value?.ToString() ?? "Uncategorized",
-                            IsPurchased = bool.Parse(worksheet.Cells[row, 4].Value?.ToString() ?? "false"),
-                            CreatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 5].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
-                            UpdatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 6].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
-                            IsDeleted = bool.Parse(worksheet.Cells[row, 7].Value?.ToString() ?? "false"),
-                            LastModifiedDate = DateTimeOffset.Parse(worksheet.Cells[row, 8].Value?.ToString() ?? DateTimeOffset.Now.ToString()),
-                            DeletedDate = DateTime.TryParse(worksheet.Cells[row, 9].Value?.ToString(), out var deletedDate) ? deletedDate : (DateTime?)null
+                            ID = worksheet.Cells[row, 1].Value?.ToString(),
+                            Name = worksheet.Cells[row, 2].Value?.ToString(),
+                            Quantity = int.Parse(worksheet.Cells[row, 3].Value?.ToString() ?? "0"),
+                            Category = worksheet.Cells[row, 4].Value?.ToString() ?? "Uncategorized",
+                            IsPurchased = bool.Parse(worksheet.Cells[row, 5].Value?.ToString() ?? "false"),
+                            CreatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 6].Value?.ToString() ?? DateTimeOffset.Now.ToString("MM/dd/yyyy HH:mm")),
+                            UpdatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 7].Value?.ToString() ?? DateTimeOffset.Now.ToString("MM/dd/yyyy HH:mm")),
+                            IsDeleted = bool.Parse(worksheet.Cells[row, 8].Value?.ToString() ?? "false"),
+                            LastModifiedDate = DateTimeOffset.Parse(worksheet.Cells[row, 9].Value?.ToString() ?? DateTimeOffset.Now.ToString("MM/dd/yyyy HH:mm")),
+                            DeletedDate = DateTimeOffset.TryParse(worksheet.Cells[row, 10].Value?.ToString(), out var deletedDate) ? deletedDate : (DateTimeOffset?)null
                         };
 
                         if (!string.IsNullOrWhiteSpace(item.Name))
@@ -120,20 +115,24 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        public async Task AddShoppingItem(ShoppingItem newItem)
+        public async Task<List<ShoppingItem>> AddShoppingItem(ShoppingItem newItem)
         {
             try
             {
+                await GetFileContent(); // Ensure we have the latest content before adding
 
                 var currentItems = await GetShoppingListFromOneDrive();
+                newItem.ID = GenerateNewId(currentItems);
                 newItem.CreatedAt = DateTimeOffset.Now;
                 newItem.UpdatedAt = DateTimeOffset.Now;
                 newItem.LastModifiedDate = DateTimeOffset.Now;
                 currentItems.Add(newItem);
 
-                await UpdateShoppingListInOneDrive(currentItems);
+                var updatedList = await UpdateShoppingListInOneDrive(currentItems);
 
                 _logger.LogInformation($"Successfully added new item: {newItem.Name}");
+
+                return updatedList;
             }
             catch (Exception ex)
             {
@@ -142,14 +141,16 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        public async Task DeleteShoppingItem(ShoppingItem itemToDelete)
+        public async Task<List<ShoppingItem>> DeleteShoppingItem(ShoppingItem itemToDelete)
         {
             try
             {
                 _logger.LogInformation($"Attempting to delete shopping item: {itemToDelete.Name}");
-                await GetFileContent();
+
+                await GetFileContent(); // Ensure we have the latest content before deleting
+
                 var currentItems = await GetShoppingListFromOneDrive();
-                var itemToRemove = currentItems.FirstOrDefault(i => i.Name == itemToDelete.Name && i.CreatedAt == itemToDelete.CreatedAt);
+                var itemToRemove = currentItems.FirstOrDefault(i => i.ID == itemToDelete.ID);
 
                 if (itemToRemove != null)
                 {
@@ -157,13 +158,16 @@ namespace MickeyUtilityWeb.Services
                     itemToRemove.DeletedDate = DateTime.Now;
                     itemToRemove.LastModifiedDate = DateTimeOffset.Now;
 
-                    await UpdateShoppingListInOneDrive(currentItems);
+                    var updatedList = await UpdateShoppingListInOneDrive(currentItems);
 
                     _logger.LogInformation($"Successfully marked item as deleted: {itemToDelete.Name}");
+
+                    return updatedList;
                 }
                 else
                 {
                     _logger.LogWarning($"Item not found for deletion: {itemToDelete.Name}");
+                    return currentItems;
                 }
             }
             catch (Exception ex)
@@ -171,6 +175,30 @@ namespace MickeyUtilityWeb.Services
                 _logger.LogError(ex, $"Error deleting shopping item: {itemToDelete.Name}");
                 throw;
             }
+        }
+
+        private async Task<byte[]> GetFileContent()
+        {
+            try
+            {
+                return await _excelApiService.GetFileContent(FILE_ID);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting file content from OneDrive");
+                throw;
+            }
+        }
+
+        private string GenerateNewId(List<ShoppingItem> currentItems)
+        {
+            string prefix = "CSL";
+            int maxId = currentItems
+                .Where(item => item.ID.StartsWith(prefix))
+                .Select(item => int.TryParse(item.ID.Substring(3), out int id) ? id : 0)
+                .DefaultIfEmpty(0)
+                .Max();
+            return $"{prefix}{maxId + 1}";
         }
     }
 }

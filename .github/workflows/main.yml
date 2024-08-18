@@ -1,9 +1,7 @@
 name: Deploy to GitHub Pages
-
 on:
   push:
     branches: [ main ]
-
 jobs:
   deploy-to-github-pages:
     runs-on: ubuntu-latest
@@ -14,6 +12,16 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '8.0.x'
+        
+    - name: Set environment variables
+      run: |
+        echo "AZURE_AD_CLIENT_ID=${{ secrets.AZURE_AD_CLIENT_ID }}" >> $GITHUB_ENV
+        echo "MASTER_FILE_ID=${{ secrets.MASTER_FILE_ID }}" >> $GITHUB_ENV
+        
+    - name: Update appsettings.json
+      run: |
+        sed -i 's/"ClientId": ""/"ClientId": "'$AZURE_AD_CLIENT_ID'"/g' MickeyUtilityWeb/MickeyUtilityWeb/wwwroot/appsettings.json
+        sed -i 's/"MasterFileId": ""/"MasterFileId": "'$MASTER_FILE_ID'"/g' MickeyUtilityWeb/MickeyUtilityWeb/wwwroot/appsettings.json
         
     - name: Publish .NET Core Project
       run: dotnet publish MickeyUtilityWeb/MickeyUtilityWeb/MickeyUtilityWeb.csproj -c Release -o release --nologo

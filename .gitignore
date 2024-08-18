@@ -6,7 +6,8 @@
 *.user
 *.userosscache
 *.sln.docstates
-
+# Exclude development settings
+appsettings.Development.json
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

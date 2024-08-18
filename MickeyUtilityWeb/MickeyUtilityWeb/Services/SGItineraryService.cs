@@ -12,21 +12,28 @@ namespace MickeyUtilityWeb.Services
     public class SGItineraryService
     {
         private readonly ExcelApiService _excelApiService;
+        private readonly FileIdService _fileIdService;
         private readonly ILogger<SGItineraryService> _logger;
-        private const string FILE_ID = "85E9FC7E76F38D5C!s12d4646d292c4ec1a42d56ebded4daee";
         private const string WORKSHEET_NAME = "Sheet1";
 
-        public SGItineraryService(ExcelApiService excelApiService, ILogger<SGItineraryService> logger)
+        public SGItineraryService(ExcelApiService excelApiService, FileIdService fileIdService, ILogger<SGItineraryService> logger)
         {
             _excelApiService = excelApiService;
+            _fileIdService = fileIdService;
             _logger = logger;
+        }
+
+        private async Task<string> GetFileId()
+        {
+            return await _fileIdService.GetFileId("SGItinerary");
         }
 
         public async Task UpdateItineraryInOneDrive(List<ItineraryItem> itinerary)
         {
             try
             {
-                var (currentRows, currentColumns, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
+                string fileId = await GetFileId();
+                var (currentRows, currentColumns, _) = await _excelApiService.GetCurrentRange(fileId, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
                 {
@@ -52,7 +59,7 @@ namespace MickeyUtilityWeb.Services
 
                 string rangeAddress = $"{WORKSHEET_NAME}!A1:G{Math.Max(currentRows, updateData.Count)}";
 
-                await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
+                await _excelApiService.UpdateRange(fileId, WORKSHEET_NAME, rangeAddress, updateData);
 
                 _logger.LogInformation("Successfully updated itinerary in OneDrive");
             }
@@ -67,10 +74,11 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
+                string fileId = await GetFileId();
                 var currentItems = await GetItineraryFromOneDrive();
                 currentItems.Add(newItem);
 
-                var (_, _, rangeAddress) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
+                var (_, _, rangeAddress) = await _excelApiService.GetCurrentRange(fileId, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
                 {
@@ -90,7 +98,7 @@ namespace MickeyUtilityWeb.Services
 
                 string newRangeAddress = $"{WORKSHEET_NAME}!A1:G{updateData.Count}";
 
-                await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, newRangeAddress, updateData);
+                await _excelApiService.UpdateRange(fileId, WORKSHEET_NAME, newRangeAddress, updateData);
             }
             catch (Exception ex)
             {
@@ -103,7 +111,8 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
-                var excelContent = await _excelApiService.GetFileContent(FILE_ID);
+                string fileId = await GetFileId();
+                var excelContent = await _excelApiService.GetFileContent(fileId);
 
                 using (var stream = new MemoryStream(excelContent))
                 using (var package = new ExcelPackage(stream))
@@ -149,9 +158,10 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
+                string fileId = await GetFileId();
                 _logger.LogInformation($"Attempting to delete itinerary item: {itemToDelete.Activity}");
 
-                var excelContent = await _excelApiService.GetFileContent(FILE_ID);
+                var excelContent = await _excelApiService.GetFileContent(fileId);
 
                 int rowToDelete = -1;
 
@@ -187,7 +197,7 @@ namespace MickeyUtilityWeb.Services
                 var deleteRowRange = $"{WORKSHEET_NAME}!A{rowToDelete}:G{rowToDelete}";
                 _logger.LogInformation($"Deleting row range: {deleteRowRange}");
 
-                await _excelApiService.DeleteRow(FILE_ID, WORKSHEET_NAME, deleteRowRange);
+                await _excelApiService.DeleteRow(fileId, WORKSHEET_NAME, deleteRowRange);
 
                 _logger.LogInformation($"Successfully deleted item: {itemToDelete.Activity}");
             }
@@ -255,6 +265,36 @@ namespace MickeyUtilityWeb.Services
             return items;
         }
 
+        private async Task ClearExistingContent()
+        {
+            string fileId = await GetFileId();
+            var (rowCount, _, _) = await _excelApiService.GetCurrentRange(fileId, WORKSHEET_NAME);
+            if (rowCount > 1) // Keep the header row
+            {
+                var clearRange = $"{WORKSHEET_NAME}!A2:G{rowCount}";
+                var clearData = Enumerable.Repeat(new object[7], rowCount - 1).ToList();
+                await _excelApiService.UpdateRange(fileId, WORKSHEET_NAME, clearRange, clearData);
+            }
+        }
+
+        private async Task AddNewItems(List<ItineraryItem> items)
+        {
+            string fileId = await GetFileId();
+            var updateData = items.Select(item => new object[]
+            {
+                item.IsChecked,
+                item.Day,
+                item.Date.ToString("yyyy-MM-dd"),
+                item.TimeString,
+                item.Activity,
+                item.Icon ?? "",
+                item.Location
+            }).ToList();
+
+            var rangeAddress = $"{WORKSHEET_NAME}!A2:G{updateData.Count + 1}";
+            await _excelApiService.UpdateRange(fileId, WORKSHEET_NAME, rangeAddress, updateData);
+        }
+
         private DateTime ParseExcelDate(object cellValue)
         {
             if (cellValue == null)
@@ -296,36 +336,8 @@ namespace MickeyUtilityWeb.Services
             _logger.LogInformation($"Parsed single time: '{formattedTime}'");
             return formattedTime;
         }
-        private async Task ClearExistingContent()
-        {
-            var (rowCount, _, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
-            if (rowCount > 1) // Keep the header row
-            {
-                var clearRange = $"{WORKSHEET_NAME}!A2:G{rowCount}";
-                var clearData = Enumerable.Repeat(new object[7], rowCount - 1).ToList();
-                await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, clearRange, clearData);
-            }
-        }
 
-        private async Task AddNewItems(List<ItineraryItem> items)
-        {
-            var updateData = items.Select(item => new object[]
-            {
-                item.IsChecked,
-                item.Day,
-                item.Date.ToString("yyyy-MM-dd"),
-                item.TimeString,
-                item.Activity,
-                item.Icon ?? "",
-                item.Location
-            }).ToList();
-
-            var rangeAddress = $"{WORKSHEET_NAME}!A2:G{updateData.Count + 1}";
-            await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
-        }
-    
-
-    private string FormatTimeString(string timeString)
+        private string FormatTimeString(string timeString)
         {
             if (string.IsNullOrWhiteSpace(timeString))
             {

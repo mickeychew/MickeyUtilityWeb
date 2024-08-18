@@ -11,23 +11,30 @@ namespace MickeyUtilityWeb.Services
     public class TravelBudgetService
     {
         private readonly ExcelApiService _excelApiService;
+        private readonly FileIdService _fileIdService;
         private readonly ILogger<TravelBudgetService> _logger;
-        private const string FILE_ID = "85E9FC7E76F38D5C!sfed3bfe619584402abb7874f99497381";
         private const string ITEMS_WORKSHEET_NAME = "Sheet1";
         private const string BUDGET_WORKSHEET_NAME = "Sheet2";
 
-        public TravelBudgetService(ExcelApiService excelApiService, ILogger<TravelBudgetService> logger)
+        public TravelBudgetService(ExcelApiService excelApiService, FileIdService fileIdService, ILogger<TravelBudgetService> logger)
         {
             _excelApiService = excelApiService;
+            _fileIdService = fileIdService;
             _logger = logger;
+        }
+
+        private async Task<string> GetFileId()
+        {
+            return await _fileIdService.GetFileId("TravelBudget");
         }
 
         public async Task UpdateTravelBudgetInOneDrive(List<TravelBudgetItem> travelBudgetList)
         {
             try
             {
+                string fileId = await GetFileId();
                 _logger.LogInformation("Starting UpdateTravelBudgetInOneDrive");
-                var (currentRows, currentColumns, _) = await _excelApiService.GetCurrentRange(FILE_ID, ITEMS_WORKSHEET_NAME);
+                var (currentRows, currentColumns, _) = await _excelApiService.GetCurrentRange(fileId, ITEMS_WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
                 {
@@ -61,7 +68,7 @@ namespace MickeyUtilityWeb.Services
 
                 string rangeAddress = $"{ITEMS_WORKSHEET_NAME}!A1:H{Math.Max(currentRows, updateData.Count)}";
 
-                await _excelApiService.UpdateRange(FILE_ID, ITEMS_WORKSHEET_NAME, rangeAddress, updateData);
+                await _excelApiService.UpdateRange(fileId, ITEMS_WORKSHEET_NAME, rangeAddress, updateData);
 
                 _logger.LogInformation("Successfully updated travel budget items in OneDrive");
             }
@@ -76,7 +83,8 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
-                var excelContent = await _excelApiService.GetFileContent(FILE_ID);
+                string fileId = await GetFileId();
+                var excelContent = await _excelApiService.GetFileContent(fileId);
 
                 using (var stream = new MemoryStream(excelContent))
                 using (var package = new ExcelPackage(stream))
@@ -203,26 +211,5 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        public async Task UpdateBudget(decimal newBudget)
-        {
-            try
-            {
-                var updateData = new List<object[]>
-                {
-                    new object[] { newBudget }
-                };
-
-                string rangeAddress = $"{BUDGET_WORKSHEET_NAME}!A1";
-
-                await _excelApiService.UpdateRange(FILE_ID, BUDGET_WORKSHEET_NAME, rangeAddress, updateData);
-
-                _logger.LogInformation($"Successfully updated budget to: {newBudget}");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating budget");
-                throw;
-            }
-        }
     }
 }

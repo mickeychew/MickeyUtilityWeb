@@ -11,23 +11,30 @@ namespace MickeyUtilityWeb.Services
     public class ShoppingListService
     {
         private readonly ExcelApiService _excelApiService;
+        private readonly FileIdService _fileIdService;
         private readonly ILogger<ShoppingListService> _logger;
-        private const string FILE_ID = "85E9FC7E76F38D5C!s75a3662de3b7461482e030e60b5f1ed8"; // Replace with actual file ID
         private const string WORKSHEET_NAME = "Sheet1";
 
-        public ShoppingListService(ExcelApiService excelApiService, ILogger<ShoppingListService> logger)
+        public ShoppingListService(ExcelApiService excelApiService, FileIdService fileIdService, ILogger<ShoppingListService> logger)
         {
             _excelApiService = excelApiService;
+            _fileIdService = fileIdService;
             _logger = logger;
+        }
+
+        private async Task<string> GetFileId()
+        {
+            return await _fileIdService.GetFileId("ShoppingList");
         }
 
         public async Task<List<ShoppingItem>> UpdateShoppingListInOneDrive(List<ShoppingItem> shoppingList)
         {
             try
             {
-                await GetFileContent(); // Ensure we have the latest content before updating
+                string fileId = await GetFileId();
+                await GetFileContent(fileId);
 
-                var (currentRows, _, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
+                var (currentRows, _, _) = await _excelApiService.GetCurrentRange(fileId, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
                 {
@@ -55,7 +62,7 @@ namespace MickeyUtilityWeb.Services
 
                 string rangeAddress = $"{WORKSHEET_NAME}!A1:J{Math.Max(currentRows, updateData.Count)}";
 
-                await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
+                await _excelApiService.UpdateRange(fileId, WORKSHEET_NAME, rangeAddress, updateData);
 
                 _logger.LogInformation("Successfully updated shopping list in OneDrive");
 
@@ -73,7 +80,8 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
-                var excelContent = await GetFileContent();
+                string fileId = await GetFileId();
+                var excelContent = await GetFileContent(fileId);
 
                 using (var stream = new MemoryStream(excelContent))
                 using (var package = new ExcelPackage(stream))
@@ -119,8 +127,8 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
-                await GetFileContent(); // Ensure we have the latest content before adding
-
+                string fileId = await GetFileId();
+                await GetFileContent(fileId);
                 var currentItems = await GetShoppingListFromOneDrive();
                 newItem.ID = GenerateNewId(currentItems);
                 newItem.CreatedAt = DateTimeOffset.Now;
@@ -147,7 +155,8 @@ namespace MickeyUtilityWeb.Services
             {
                 _logger.LogInformation($"Attempting to delete shopping item: {itemToDelete.Name}");
 
-                await GetFileContent(); // Ensure we have the latest content before deleting
+                string fileId = await GetFileId();
+                await GetFileContent(fileId);
 
                 var currentItems = await GetShoppingListFromOneDrive();
                 var itemToRemove = currentItems.FirstOrDefault(i => i.ID == itemToDelete.ID);
@@ -177,11 +186,11 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        private async Task<byte[]> GetFileContent()
+        private async Task<byte[]> GetFileContent(string fileId)
         {
             try
             {
-                return await _excelApiService.GetFileContent(FILE_ID);
+                return await _excelApiService.GetFileContent(fileId);
             }
             catch (Exception ex)
             {

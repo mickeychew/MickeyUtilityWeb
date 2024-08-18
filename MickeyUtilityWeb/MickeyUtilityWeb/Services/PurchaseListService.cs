@@ -11,21 +11,28 @@ namespace MickeyUtilityWeb.Services
     public class PurchaseListService
     {
         private readonly ExcelApiService _excelApiService;
+        private readonly FileIdService _fileIdService;
         private readonly ILogger<PurchaseListService> _logger;
-        private const string FILE_ID = "85E9FC7E76F38D5C!s2ce1d06cee4b48d891c5afaea5baf7fd";
         private const string WORKSHEET_NAME = "Sheet1";
 
-        public PurchaseListService(ExcelApiService excelApiService, ILogger<PurchaseListService> logger)
+        public PurchaseListService(ExcelApiService excelApiService, FileIdService fileIdService, ILogger<PurchaseListService> logger)
         {
             _excelApiService = excelApiService;
+            _fileIdService = fileIdService;
             _logger = logger;
+        }
+
+        private async Task<string> GetFileId()
+        {
+            return await _fileIdService.GetFileId("PurchaseList");
         }
 
         public async Task UpdatePurchaseListInOneDrive(List<PurchaseItem> purchaseList)
         {
             try
             {
-                var (currentRows, currentColumns, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
+                string fileId = await GetFileId();
+                var (currentRows, currentColumns, _) = await _excelApiService.GetCurrentRange(fileId, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
                 {
@@ -51,7 +58,7 @@ namespace MickeyUtilityWeb.Services
 
                 string rangeAddress = $"{WORKSHEET_NAME}!A1:G{Math.Max(currentRows, updateData.Count)}";
 
-                await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
+                await _excelApiService.UpdateRange(fileId, WORKSHEET_NAME, rangeAddress, updateData);
 
                 _logger.LogInformation("Successfully updated purchase list in OneDrive");
             }
@@ -66,7 +73,8 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
-                var excelContent = await _excelApiService.GetFileContent(FILE_ID);
+                string fileId = await GetFileId();
+                var excelContent = await _excelApiService.GetFileContent(fileId);
 
                 using (var stream = new MemoryStream(excelContent))
                 using (var package = new ExcelPackage(stream))
@@ -110,10 +118,11 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
+                string fileId = await GetFileId();
                 var currentItems = await GetPurchaseListFromOneDrive();
                 currentItems.Add(newItem);
 
-                var (_, _, rangeAddress) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
+                var (_, _, rangeAddress) = await _excelApiService.GetCurrentRange(fileId, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
                 {
@@ -133,7 +142,7 @@ namespace MickeyUtilityWeb.Services
 
                 string newRangeAddress = $"{WORKSHEET_NAME}!A1:G{updateData.Count}";
 
-                await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, newRangeAddress, updateData);
+                await _excelApiService.UpdateRange(fileId, WORKSHEET_NAME, newRangeAddress, updateData);
 
                 _logger.LogInformation($"Successfully added new item: {newItem.Name}");
             }
@@ -148,11 +157,12 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
+                string fileId = await GetFileId();
                 _logger.LogInformation($"Attempting to delete purchase item: {itemToDelete.Name}");
 
-                var (rowCount, colCount, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
+                var (rowCount, colCount, _) = await _excelApiService.GetCurrentRange(fileId, WORKSHEET_NAME);
 
-                var excelContent = await _excelApiService.GetFileContent(FILE_ID);
+                var excelContent = await _excelApiService.GetFileContent(fileId);
 
                 int rowToDelete = -1;
 
@@ -184,7 +194,7 @@ namespace MickeyUtilityWeb.Services
                 var deleteRowRange = $"{WORKSHEET_NAME}!A{rowToDelete}:G{rowToDelete}";
                 _logger.LogInformation($"Deleting row range: {deleteRowRange}");
 
-                await _excelApiService.DeleteRow(FILE_ID, WORKSHEET_NAME, deleteRowRange);
+                await _excelApiService.DeleteRow(fileId, WORKSHEET_NAME, deleteRowRange);
 
                 _logger.LogInformation($"Successfully deleted item: {itemToDelete.Name}");
             }

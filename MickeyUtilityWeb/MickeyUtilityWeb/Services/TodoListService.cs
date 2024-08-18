@@ -11,23 +11,30 @@ namespace MickeyUtilityWeb.Services
     public class TodoListService
     {
         private readonly ExcelApiService _excelApiService;
+        private readonly FileIdService _fileIdService;
         private readonly ILogger<TodoListService> _logger;
-        private const string FILE_ID = "85E9FC7E76F38D5C!s54a1e263a450422582ec249631d712d6";
         private const string WORKSHEET_NAME = "Sheet1";
 
-        public TodoListService(ExcelApiService excelApiService, ILogger<TodoListService> logger)
+        public TodoListService(ExcelApiService excelApiService, FileIdService fileIdService, ILogger<TodoListService> logger)
         {
             _excelApiService = excelApiService;
+            _fileIdService = fileIdService;
             _logger = logger;
+        }
+
+        private async Task<string> GetFileId()
+        {
+            return await _fileIdService.GetFileId("TodoList");
         }
 
         public async Task<List<TodoItem>> UpdateTodoListInOneDrive(List<TodoItem> todoList)
         {
             try
             {
+                string fileId = await GetFileId();
                 await GetFileContent(); // Ensure we have the latest content before updating
 
-                var (currentRows, _, _) = await _excelApiService.GetCurrentRange(FILE_ID, WORKSHEET_NAME);
+                var (currentRows, _, _) = await _excelApiService.GetCurrentRange(fileId, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
                 {
@@ -36,18 +43,18 @@ namespace MickeyUtilityWeb.Services
 
                 updateData.AddRange(todoList.Select(item => new object[]
                 {
-                      item.ID,
-                item.Title,
-                item.Description,
-                item.DueDate?.ToString("MM/dd/yyyy HH:mm"),
-                item.IsCompleted,
-                item.Category,
-                item.ParentTaskId,
-                item.CreatedAt.ToString("MM/dd/yyyy HH:mm"),
-                item.UpdatedAt.ToString("MM/dd/yyyy HH:mm"),
-                item.IsDeleted,
-                item.LastModifiedDate.ToString("MM/dd/yyyy HH:mm"),
-                item.DeletedDate?.ToString("MM/dd/yyyy HH:mm")
+                    item.ID,
+                    item.Title,
+                    item.Description,
+                    item.DueDate?.ToString("MM/dd/yyyy HH:mm"),
+                    item.IsCompleted,
+                    item.Category,
+                    item.ParentTaskId,
+                    item.CreatedAt.ToString("MM/dd/yyyy HH:mm"),
+                    item.UpdatedAt.ToString("MM/dd/yyyy HH:mm"),
+                    item.IsDeleted,
+                    item.LastModifiedDate.ToString("MM/dd/yyyy HH:mm"),
+                    item.DeletedDate?.ToString("MM/dd/yyyy HH:mm")
                 }));
 
                 while (updateData.Count < currentRows)
@@ -57,7 +64,7 @@ namespace MickeyUtilityWeb.Services
 
                 string rangeAddress = $"{WORKSHEET_NAME}!A1:L{Math.Max(currentRows, updateData.Count)}";
 
-                await _excelApiService.UpdateRange(FILE_ID, WORKSHEET_NAME, rangeAddress, updateData);
+                await _excelApiService.UpdateRange(fileId, WORKSHEET_NAME, rangeAddress, updateData);
 
                 _logger.LogInformation("Successfully updated todo list in OneDrive");
 
@@ -75,6 +82,7 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
+                string fileId = await GetFileId();
                 var excelContent = await GetFileContent();
 
                 using (var stream = new MemoryStream(excelContent))
@@ -185,7 +193,8 @@ namespace MickeyUtilityWeb.Services
         {
             try
             {
-                return await _excelApiService.GetFileContent(FILE_ID);
+                string fileId = await GetFileId();
+                return await _excelApiService.GetFileContent(fileId);
             }
             catch (Exception ex)
             {

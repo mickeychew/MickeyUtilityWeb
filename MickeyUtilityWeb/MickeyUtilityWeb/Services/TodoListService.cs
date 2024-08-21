@@ -100,15 +100,15 @@ namespace MickeyUtilityWeb.Services
                             ID = worksheet.Cells[row, 1].Value?.ToString(),
                             Title = worksheet.Cells[row, 2].Value?.ToString(),
                             Description = worksheet.Cells[row, 3].Value?.ToString(),
-                            DueDate = DateTimeOffset.TryParse(worksheet.Cells[row, 4].Value?.ToString(), out var dueDate) ? dueDate : (DateTimeOffset?)null,
+                            DueDate = DateTime.TryParse(worksheet.Cells[row, 4].Value?.ToString(), out var dueDate) ? dueDate : (DateTime?)null,
                             IsCompleted = bool.Parse(worksheet.Cells[row, 5].Value?.ToString() ?? "false"),
                             Category = worksheet.Cells[row, 6].Value?.ToString() ?? "Uncategorized",
                             ParentTaskId = worksheet.Cells[row, 7].Value?.ToString(),
-                            CreatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 8].Value?.ToString() ?? DateTimeOffset.Now.ToString("MM/dd/yyyy HH:mm")),
-                            UpdatedAt = DateTimeOffset.Parse(worksheet.Cells[row, 9].Value?.ToString() ?? DateTimeOffset.Now.ToString("MM/dd/yyyy HH:mm")),
+                            CreatedAt = DateTime.Parse(worksheet.Cells[row, 8].Value?.ToString() ?? DateTime.Now.ToString("MM/dd/yyyy HH:mm")),
+                            UpdatedAt = DateTime.Parse(worksheet.Cells[row, 9].Value?.ToString() ?? DateTime.Now.ToString("MM/dd/yyyy HH:mm")),
                             IsDeleted = bool.Parse(worksheet.Cells[row, 10].Value?.ToString() ?? "false"),
-                            LastModifiedDate = DateTimeOffset.Parse(worksheet.Cells[row, 11].Value?.ToString() ?? DateTimeOffset.Now.ToString("MM/dd/yyyy HH:mm")),
-                            DeletedDate = DateTimeOffset.TryParse(worksheet.Cells[row, 12].Value?.ToString(), out var deletedDate) ? deletedDate : (DateTimeOffset?)null
+                            LastModifiedDate = DateTime.Parse(worksheet.Cells[row, 11].Value?.ToString() ?? DateTime.Now.ToString("MM/dd/yyyy HH:mm")),
+                            DeletedDate = DateTime.TryParse(worksheet.Cells[row, 12].Value?.ToString(), out var deletedDate) ? deletedDate : (DateTime?)null
                         };
 
                         if (!string.IsNullOrWhiteSpace(item.Title))
@@ -135,9 +135,9 @@ namespace MickeyUtilityWeb.Services
 
                 var currentItems = await GetTodoListFromOneDrive();
                 newItem.ID = GenerateNewId(currentItems, string.IsNullOrEmpty(newItem.ParentTaskId));
-                newItem.CreatedAt = DateTimeOffset.Now;
-                newItem.UpdatedAt = DateTimeOffset.Now;
-                newItem.LastModifiedDate = DateTimeOffset.Now;
+                newItem.CreatedAt = DateTime.Now;
+                newItem.UpdatedAt = DateTime.Now;
+                newItem.LastModifiedDate = DateTime.Now;
                 currentItems.Add(newItem);
 
                 var updatedList = await UpdateTodoListInOneDrive(currentItems);
@@ -168,7 +168,7 @@ namespace MickeyUtilityWeb.Services
                 {
                     itemToRemove.IsDeleted = true;
                     itemToRemove.DeletedDate = DateTime.Now;
-                    itemToRemove.LastModifiedDate = DateTimeOffset.Now;
+                    itemToRemove.LastModifiedDate = DateTime.Now;
 
                     var updatedList = await UpdateTodoListInOneDrive(currentItems);
 
@@ -205,10 +205,15 @@ namespace MickeyUtilityWeb.Services
 
         private string GenerateNewId(List<TodoItem> currentItems, bool isMainTask)
         {
-            string prefix = isMainTask ? "MTS" : "STS";
+            string prefix = isMainTask ? "MCMT" : "MCST";
             int maxId = currentItems
-                .Where(item => item.ID.StartsWith(prefix))
-                .Select(item => int.TryParse(item.ID.Substring(3), out int id) ? id : 0)
+                .Where(item => item.ID.StartsWith("MC")) // Check for both MCMT and MCST
+                .Select(item =>
+                {
+                    if (int.TryParse(item.ID.Substring(4), out int id))
+                        return id;
+                    return 0;
+                })
                 .DefaultIfEmpty(0)
                 .Max();
             return $"{prefix}{maxId + 1}";

@@ -243,8 +243,8 @@
     private async Task ToggleCompleted(TodoItem item)
     {
         item.IsCompleted = !item.IsCompleted;
-        item.UpdatedAt = DateTimeOffset.Now;
-        item.LastModifiedDate = DateTimeOffset.Now;
+        item.UpdatedAt = DateTime.Now;
+        item.LastModifiedDate = DateTime.Now;
         await UpdateTodoList();
         await toast.ShowToast($"Task {(item.IsCompleted ? "completed" : "marked as incomplete")}", "info");
     }
@@ -274,9 +274,9 @@
 
         try
         {
-            newItem.CreatedAt = DateTimeOffset.Now;
-            newItem.UpdatedAt = DateTimeOffset.Now;
-            newItem.LastModifiedDate = DateTimeOffset.Now;
+            newItem.CreatedAt = DateTime.Now;
+            newItem.UpdatedAt = DateTime.Now;
+            newItem.LastModifiedDate = DateTime.Now;
             todoItems = await TodoListService.AddTodoItem(newItem);
             newItem = new TodoItem { DueDate = DateTime.Today.AddDays(1) };
             errorMessage = null;
@@ -321,8 +321,8 @@
 
     private async Task SaveEdit(TodoItem item)
     {
-        item.UpdatedAt = DateTimeOffset.Now;
-        item.LastModifiedDate = DateTimeOffset.Now;
+        item.UpdatedAt = DateTime.Now;
+        item.LastModifiedDate = DateTime.Now;
         editingItem = null;
         await UpdateTodoList();
         await toast.ShowToast("Task updated successfully", "success");

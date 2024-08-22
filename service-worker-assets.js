@@ -113,7 +113,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-r+OV8EAiApteMe4G4YHYQQJ9AS6MuIux9JOgWrEKMXA=",
+      "hash": "sha256-87aV7Zj+VcsZav\/FsYop5DbdnZA7bS1I8y01tm9uzUc=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -129,7 +129,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-fvJs5X8TDd+cVa2c4tU0wCHQPhJdWKA2lFFb19HnwcY=",
+      "hash": "sha256-719VSELLwbiBjy3jv7BPC\/bJ2xLJtaTFxuEVpXpSnfQ=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -429,5 +429,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "r0NYfOiD"
+  "version": "dKawP0yg"
 };

@@ -37,24 +37,24 @@ namespace MickeyUtilityWeb.Services
                 var (currentRows, _, _) = await _excelApiService.GetCurrentRange(fileId, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
-                {
-                    new object[] { "ID", "Title", "Description", "DueDate", "IsCompleted", "Category", "ParentTaskId", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
-                };
+            {
+                new object[] { "ID", "Title", "Description", "DueDate", "IsCompleted", "Category", "ParentTaskId", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
+            };
 
                 updateData.AddRange(todoList.Select(item => new object[]
                 {
-                    item.ID,
-                    item.Title,
-                    item.Description,
-                    item.DueDate?.ToString("MM/dd/yyyy HH:mm"),
-                    item.IsCompleted,
-                    item.Category,
-                    item.ParentTaskId,
-                    item.CreatedAt.ToString("MM/dd/yyyy HH:mm"),
-                    item.UpdatedAt.ToString("MM/dd/yyyy HH:mm"),
-                    item.IsDeleted,
-                    item.LastModifiedDate.ToString("MM/dd/yyyy HH:mm"),
-                    item.DeletedDate?.ToString("MM/dd/yyyy HH:mm")
+                item.ID,
+                item.Title,
+                item.Description,
+                item.DueDate?.ToString("MM/dd/yyyy HH:mm"),
+                item.IsCompleted,
+                item.Category,
+                item.ParentTaskId,
+                item.CreatedAt.ToString("MM/dd/yyyy HH:mm"),
+                item.UpdatedAt.ToString("MM/dd/yyyy HH:mm"),
+                item.IsDeleted,
+                item.LastModifiedDate.ToString("MM/dd/yyyy HH:mm"),
+                item.DeletedDate?.ToString("MM/dd/yyyy HH:mm")
                 }));
 
                 while (updateData.Count < currentRows)

@@ -253,9 +253,28 @@
     {
         try
         {
-            todoItems = await TodoListService.DeleteTodoItem(item);
+            // If the item is a main task, remove all its subtasks
+            if (string.IsNullOrEmpty(item.ParentTaskId))
+            {
+                var subtasksToRemove = todoItems.Where(i => i.ParentTaskId == item.ID).ToList();
+                foreach (var subtask in subtasksToRemove)
+                {
+                    subtask.IsDeleted = true;
+                    subtask.DeletedDate = DateTime.Now;
+                    subtask.LastModifiedDate = DateTime.Now;
+                }
+            }
+
+            // Mark the item as deleted
+            item.IsDeleted = true;
+            item.DeletedDate = DateTime.Now;
+            item.LastModifiedDate = DateTime.Now;
+
+            // Update the list in OneDrive
+            todoItems = await TodoListService.UpdateTodoListInOneDrive(todoItems);
+
             errorMessage = null;
-            await toast.ShowToast("Task removed successfully", "success");
+            await toast.ShowToast("Task and related subtasks removed successfully", "success");
         }
         catch (Exception ex)
         {

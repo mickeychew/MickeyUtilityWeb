@@ -201,10 +201,10 @@ namespace MickeyUtilityWeb.Services
 
         private string GenerateNewId(List<ShoppingItem> currentItems)
         {
-            string prefix = "CSL";
+            string prefix = "MCSL";
             int maxId = currentItems
                 .Where(item => item.ID.StartsWith(prefix))
-                .Select(item => int.TryParse(item.ID.Substring(3), out int id) ? id : 0)
+                .Select(item => int.TryParse(item.ID.Substring(4), out int id) ? id : 0)
                 .DefaultIfEmpty(0)
                 .Max();
             return $"{prefix}{maxId + 1}";

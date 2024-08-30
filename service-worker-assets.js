@@ -25,12 +25,20 @@
       "url": "css\/Itinerary\/SGItineraryEdit.css"
     },
     {
+      "hash": "sha256-sqpy11+5zLdrwDYonrgSKMik3qMcHC64dVmMrJ6E414=",
+      "url": "css\/Itinerary\/uiDesignItinerary.css"
+    },
+    {
       "hash": "sha256-Zrj9bH7uvr2fSqfO1ufF4t1FZe3+G\/scIW4bgzUn0JI=",
       "url": "css\/PurchaseList\/PurchaseList.css"
     },
     {
       "hash": "sha256-ISORgioifukGR3Ce6hsuG\/whcJmjXFH75dJCFXdX9AM=",
       "url": "css\/Shared\/Icon.css"
+    },
+    {
+      "hash": "sha256-d1y6CNG+xh5W1\/YrEGSRAnMSRKkTqM9pTKVKfN7H0OI=",
+      "url": "css\/Shared\/IconV2.css"
     },
     {
       "hash": "sha256-S5EXi+ONU7vldworPkATtdEpmZbutbZEpbWWlwk\/Epc=",
@@ -113,7 +121,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-BJ9VvLxwwKR18pycVP2DVdbY86AyfRhxGVQv4VOcAMM=",
+      "hash": "sha256-nUXaA8hyGiDdbJyWVLziQDW6DB9F\/sEGOT\/Bpa\/crJ4=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -129,7 +137,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-jbWh3Bcb4gQ9BnCfyH9R3ydcz6ZxUj0LQtvdCorqwDs=",
+      "hash": "sha256-TnwWlBP3JE0oSz8rRZ2i8mIlcvZA2wa4EVoawaiH9Hk=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -141,7 +149,7 @@
       "url": "_framework\/Microsoft.AspNetCore.Components.Authorization.wasm"
     },
     {
-      "hash": "sha256-dQ4JznwOb5Qy0fhBti1MtqPTMOQ5baXsl9rToERE8\/4=",
+      "hash": "sha256-ToTW\/UplFhpy4ptrLgR8ewokHeoyxR4VqgtvtZZePfk=",
       "url": "_framework\/Microsoft.AspNetCore.Components.wasm"
     },
     {
@@ -429,5 +437,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "zW5nfuoa"
+  "version": "Gv6L5KSz"
 };

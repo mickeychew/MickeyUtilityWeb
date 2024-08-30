@@ -1,0 +1,189 @@
+﻿@page "/uidesignItinerary"
+@using MickeyUtilityWeb.Models
+@using MickeyUtilityWeb.Services
+@using MickeyUtilityWeb.Shared
+@inject ItineraryTestDataService ItineraryTestDataService
+@inject IconService IconService
+<link href="css/Itinerary/uiDesignItinerary.css" rel="stylesheet" />
+<link href="css/Shared//IconV2.js" rel="stylesheet" />
+<link href="css/Shared/Toast.css" rel="stylesheet" />
+<div class="pastel-app">
+    <div class="pastel-header">
+        <h1 class="pastel-title">Singapore Trip Itinerary</h1>
+        <div class="pastel-flip-clock">
+            <span class="flip-clock-digit">@DateTime.Now.ToString("HH:mm:ss")</span>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="pastel-loading">
+            <div class="pastel-spinner"></div>
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="pastel-error">@errorMessage</div>
+    }
+    else if (itineraryItems != null && itineraryItems.Any())
+    {
+        <div class="pastel-main-content">
+            <div class="pastel-search">
+                <input type="text" placeholder="Search activities..." />
+            </div>
+            <div class="pastel-tabs">
+                @foreach (var day in itineraryItems.Select(item => item.Day).Distinct())
+                {
+                    <button class="pastel-tab @(day == activeTab ? "active" : "")" @onclick="() => SetActiveTab(day)">
+                        @day
+                    </button>
+                }
+            </div>
+            <div class="pastel-timeline">
+                @foreach (var item in itineraryItems.Where(i => i.Day == activeTab))
+                {
+                    <div class="pastel-item @(item.IsChecked ? "completed" : "")">
+                        <div class="pastel-item-time">@item.TimeString</div>
+                        <div class="pastel-item-content">
+                            <div class="pastel-icon @item.Icon"></div>
+                            <div class="pastel-item-details">
+                                @if (editingItem == item)
+                                {
+                                    <input class="pastel-edit-input" @bind="item.Activity" />
+                                    <input class="pastel-edit-input" @bind="item.Location" />
+                                    <select class="pastel-edit-select" @bind="item.Icon">
+                                        @foreach (var icon in icons)
+                                        {
+                                            <option value="@icon.Key">@icon.Value</option>
+                                        }
+                                    </select>
+                                }
+                                else
+                                {
+                                    <h3 class="pastel-item-activity">@item.Activity</h3>
+                                    @if (!string.IsNullOrEmpty(item.Location))
+                                    {
+                                        <p class="pastel-item-location">@item.Location</p>
+                                    }
+                                }
+                            </div>
+                            <div class="pastel-item-actions">
+                                @if (editingItem == item)
+                                {
+                                    <button class="pastel-btn-icon" title="Save" @onclick="() => SaveEdit(item)">
+                                        <span class="icon icon-save"></span>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="pastel-btn-icon" title="Edit" @onclick="() => StartEdit(item)">
+                                        <span class="icon icon-edit"></span>
+                                    </button>
+                                }
+                                <button class="pastel-btn-icon" title="Delete">
+                                    <span class="icon icon-delete"></span>
+                                </button>
+                                <button class="pastel-btn-icon" title="Toggle Completion" @onclick="() => ToggleCompletion(item)">
+                                    <span class="icon">@(item.IsChecked ? "✓" : "○")</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="pastel-right-sidebar">
+            <h2>Trip Summary</h2>
+            <div class="pastel-widget">
+                <div class="pastel-widget-large">@itineraryItems.Count()</div>
+                <div class="pastel-widget-small">Total Activities</div>
+            </div>
+            <div class="pastel-widget">
+                <div class="pastel-widget-large">@itineraryItems.Count(i => i.IsChecked)</div>
+                <div class="pastel-widget-small">Completed</div>
+            </div>
+            <div class="pastel-progress-bars">
+                <div class="pastel-progress-item">
+                    <span>
+                        <span>Progress</span>
+                        <span>@($"{(int)(itineraryItems.Count(i => i.IsChecked) / (float)itineraryItems.Count() * 100)}%")</span>
+                    </span>
+                    <div class="pastel-progress-bar">
+                        <div style="width: @($"{(int)(itineraryItems.Count(i => i.IsChecked) / (float)itineraryItems.Count() * 100)}%")"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="pastel-weather-widget">
+                <h3>Weather Forecast</h3>
+                <div class="pastel-weather-item">
+                    <span class="icon icon-sun"></span>
+                    <span>28°C</span>
+                </div>
+            </div>
+            <div class="pastel-notes">
+                <h3>Trip Notes</h3>
+                <textarea class="pastel-notes-input" placeholder="Add your notes here..."></textarea>
+            </div>
+        </div>
+    }
+    else
+    {
+        <p>No itinerary items found.</p>
+    }
+</div>
+
+<div class="pastel-add-activity" title="Add New Activity">+</div>
+
+@code {
+    private List<ItineraryItem> itineraryItems = new List<ItineraryItem>();
+    private string activeTab = "Day 1";
+    private bool isLoading = true;
+    private string errorMessage;
+    private ItineraryItem editingItem;
+    private Dictionary<string, string> icons;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadItinerary();
+        icons = IconService.GetIcons();
+    }
+
+    private async Task LoadItinerary()
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            itineraryItems = await ItineraryTestDataService.GetItineraryItems();
+            activeTab = itineraryItems.FirstOrDefault()?.Day ?? "Day 1";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading itinerary: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SetActiveTab(string day)
+    {
+        activeTab = day;
+    }
+
+    private void StartEdit(ItineraryItem item)
+    {
+        editingItem = item;
+    }
+
+    private void SaveEdit(ItineraryItem item)
+    {
+        editingItem = null;
+    }
+
+    private void ToggleCompletion(ItineraryItem item)
+    {
+        item.IsChecked = !item.IsChecked;
+    }
+}

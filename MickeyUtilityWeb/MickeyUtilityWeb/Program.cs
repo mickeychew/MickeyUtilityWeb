@@ -37,6 +37,8 @@ builder.Services.AddScoped<TravelBudgetService>();
 builder.Services.AddScoped<TodoListService>();
 builder.Services.AddScoped<ShoppingListService>();
 builder.Services.AddScoped<FileIdService>();
+builder.Services.AddScoped<ItineraryTestDataService>();
+builder.Services.AddScoped<IconService>();
 builder.Services.AddApiAuthorization();
 
 await builder.Build().RunAsync();

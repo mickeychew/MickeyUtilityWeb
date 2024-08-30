@@ -1,0 +1,153 @@
+﻿/* Base icon styles */
+[class^="icon-"] {
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    display: inline-block;
+}
+
+/* Icon definitions */
+.icon-home::before {
+    content: '🏠';
+}
+
+.icon-plane::before {
+    content: '✈️';
+}
+
+.icon-utensils::before {
+    content: '🍴';
+}
+
+.icon-hotel::before {
+    content: '🏨';
+}
+
+.icon-coffee::before {
+    content: '☕';
+}
+
+.icon-camera::before {
+    content: '📷';
+}
+
+.icon-sun::before {
+    content: '☀️';
+}
+
+.icon-car::before {
+    content: '🚗';
+}
+
+.icon-train::before {
+    content: '🚂';
+}
+
+.icon-bus::before {
+    content: '🚌';
+}
+
+.icon-ship::before {
+    content: '🚢';
+}
+
+.icon-bicycle::before {
+    content: '🚲';
+}
+
+.icon-walking::before {
+    content: '🚶';
+}
+
+.icon-shopping-cart::before {
+    content: '🛒';
+}
+
+.icon-museum::before {
+    content: '🏛️';
+}
+
+.icon-monument::before {
+    content: '🗽';
+}
+
+.icon-beach::before {
+    content: '🏖️';
+}
+
+.icon-mountain::before {
+    content: '⛰️';
+}
+
+.icon-park::before {
+    content: '🏞️';
+}
+
+.icon-restaurant::before {
+    content: '🍽️';
+}
+
+.icon-bar::before {
+    content: '🍸';
+}
+
+.icon-theater::before {
+    content: '🎭';
+}
+
+.icon-movie::before {
+    content: '🎬';
+}
+
+.icon-music::before {
+    content: '🎵';
+}
+
+.icon-swimming::before {
+    content: '🏊';
+}
+
+.icon-gym::before {
+    content: '🏋️';
+}
+
+.icon-spa::before {
+    content: '💆';
+}
+
+.icon-library::before {
+    content: '📚';
+}
+
+.icon-university::before {
+    content: '🎓';
+}
+
+.icon-hospital::before {
+    content: '🏥';
+}
+
+/* Additional utility icons */
+.icon-edit::before {
+    content: '✏️';
+}
+
+.icon-save::before {
+    content: '💾';
+}
+
+.icon-delete::before {
+    content: '🗑️';
+}
+
+.icon-add::before {
+    content: '➕';
+}
+
+.icon-check::before {
+    content: '✅';
+}
+
+.icon-close::before {
+    content: '❌';
+}

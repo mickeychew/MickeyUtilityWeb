@@ -17,6 +17,12 @@
         <Authorized>
             <div class="page-header">
                 <h1 class="page-title">To-Do List</h1>
+                <select @bind="selectedListKey" @bind:after="OnListSelectionChanged">
+                    @foreach (var list in availableLists)
+                    {
+                        <option value="@list.Key">@list.Key</option>
+                    }
+                </select>
                 <div class="flip-clock">
                     <div class="flip-clock-item">@DateTime.Now.ToString("HH")</div>
                     <div class="flip-clock-item">@DateTime.Now.ToString("mm")</div>
@@ -200,6 +206,8 @@
     private TodoItem editingItem;
     private string currentFilter = "all";
     private HashSet<string> expandedItems = new HashSet<string>();
+    private List<ExcelListItem> availableLists = new List<ExcelListItem>();
+    private string selectedListKey = "";
 
     private IEnumerable<TodoItem> FilteredTodoItems => currentFilter switch
     {
@@ -216,8 +224,31 @@
         var authState = await AuthenticationStateTask;
         if (authState.User.Identity.IsAuthenticated)
         {
-            await LoadTodoList();
+            await LoadAvailableLists();
+            if (availableLists.Any())
+            {
+                selectedListKey = availableLists.First().Key;
+                await LoadTodoList();
+            }
         }
+    }
+
+    private async Task LoadAvailableLists()
+    {
+        try
+        {
+            availableLists = await TodoListService.GetAvailableLists();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading available lists: {ex.Message}";
+            await toast.ShowToast("Failed to load available lists", "error");
+        }
+    }
+
+    private async Task OnListSelectionChanged()
+    {
+        await LoadTodoList();
     }
 
     private async Task LoadTodoList()
@@ -226,7 +257,7 @@
         errorMessage = null;
         try
         {
-            todoItems = await TodoListService.GetTodoListFromOneDrive();
+            todoItems = await TodoListService.GetTodoListFromOneDrive(selectedListKey);
             await toast.ShowToast("Todo list loaded successfully", "success");
         }
         catch (Exception ex)
@@ -271,7 +302,7 @@
             item.LastModifiedDate = DateTime.Now;
 
             // Update the list in OneDrive
-            todoItems = await TodoListService.UpdateTodoListInOneDrive(todoItems);
+            todoItems = await TodoListService.UpdateTodoListInOneDrive(selectedListKey, todoItems);
 
             errorMessage = null;
             await toast.ShowToast("Task and related subtasks removed successfully", "success");
@@ -296,7 +327,7 @@
             newItem.CreatedAt = DateTime.Now;
             newItem.UpdatedAt = DateTime.Now;
             newItem.LastModifiedDate = DateTime.Now;
-            todoItems = await TodoListService.AddTodoItem(newItem);
+            todoItems = await TodoListService.AddTodoItem(selectedListKey, newItem);
             newItem = new TodoItem { DueDate = DateTime.Today.AddDays(1) };
             errorMessage = null;
             await toast.ShowToast("New task added successfully", "success");
@@ -312,7 +343,7 @@
     {
         try
         {
-            todoItems = await TodoListService.UpdateTodoListInOneDrive(todoItems);
+            todoItems = await TodoListService.UpdateTodoListInOneDrive(selectedListKey, todoItems);
             errorMessage = null;
             await toast.ShowToast("Todo list updated successfully", "success");
         }

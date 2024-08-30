@@ -22,39 +22,39 @@ namespace MickeyUtilityWeb.Services
             _logger = logger;
         }
 
-        private async Task<string> GetFileId()
+        public async Task<List<ExcelListItem>> GetAvailableLists()
         {
-            return await _fileIdService.GetFileId("TodoList");
+            return await _fileIdService.GetFileIdsByService("TodoList");
         }
 
-        public async Task<List<TodoItem>> UpdateTodoListInOneDrive(List<TodoItem> todoList)
+        public async Task<List<TodoItem>> UpdateTodoListInOneDrive(string key, List<TodoItem> todoList)
         {
             try
             {
-                string fileId = await GetFileId();
-                await GetFileContent(); // Ensure we have the latest content before updating
+                string fileId = await _fileIdService.GetFileId(key);
+                await GetFileContent(key); // Ensure we have the latest content before updating
 
                 var (currentRows, _, _) = await _excelApiService.GetCurrentRange(fileId, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
-            {
-                new object[] { "ID", "Title", "Description", "DueDate", "IsCompleted", "Category", "ParentTaskId", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
-            };
+                {
+                    new object[] { "ID", "Title", "Description", "DueDate", "IsCompleted", "Category", "ParentTaskId", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
+                };
 
                 updateData.AddRange(todoList.Select(item => new object[]
                 {
-                item.ID,
-                item.Title,
-                item.Description,
-                item.DueDate?.ToString("MM/dd/yyyy HH:mm"),
-                item.IsCompleted,
-                item.Category,
-                item.ParentTaskId,
-                item.CreatedAt.ToString("MM/dd/yyyy HH:mm"),
-                item.UpdatedAt.ToString("MM/dd/yyyy HH:mm"),
-                item.IsDeleted,
-                item.LastModifiedDate.ToString("MM/dd/yyyy HH:mm"),
-                item.DeletedDate?.ToString("MM/dd/yyyy HH:mm")
+                    item.ID,
+                    item.Title,
+                    item.Description,
+                    item.DueDate?.ToString("MM/dd/yyyy HH:mm"),
+                    item.IsCompleted,
+                    item.Category,
+                    item.ParentTaskId,
+                    item.CreatedAt.ToString("MM/dd/yyyy HH:mm"),
+                    item.UpdatedAt.ToString("MM/dd/yyyy HH:mm"),
+                    item.IsDeleted,
+                    item.LastModifiedDate.ToString("MM/dd/yyyy HH:mm"),
+                    item.DeletedDate?.ToString("MM/dd/yyyy HH:mm")
                 }));
 
                 while (updateData.Count < currentRows)
@@ -69,7 +69,7 @@ namespace MickeyUtilityWeb.Services
                 _logger.LogInformation("Successfully updated todo list in OneDrive");
 
                 // Return the updated list
-                return await GetTodoListFromOneDrive();
+                return await GetTodoListFromOneDrive(key);
             }
             catch (Exception ex)
             {
@@ -78,12 +78,12 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        public async Task<List<TodoItem>> GetTodoListFromOneDrive()
+        public async Task<List<TodoItem>> GetTodoListFromOneDrive(string key)
         {
             try
             {
-                string fileId = await GetFileId();
-                var excelContent = await GetFileContent();
+                string fileId = await _fileIdService.GetFileId(key);
+                var excelContent = await GetFileContent(key);
 
                 using (var stream = new MemoryStream(excelContent))
                 using (var package = new ExcelPackage(stream))
@@ -127,20 +127,20 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        public async Task<List<TodoItem>> AddTodoItem(TodoItem newItem)
+        public async Task<List<TodoItem>> AddTodoItem(string key, TodoItem newItem)
         {
             try
             {
-                await GetFileContent(); // Ensure we have the latest content before adding
+                await GetFileContent(key); // Ensure we have the latest content before adding
 
-                var currentItems = await GetTodoListFromOneDrive();
+                var currentItems = await GetTodoListFromOneDrive(key);
                 newItem.ID = GenerateNewId(currentItems, string.IsNullOrEmpty(newItem.ParentTaskId));
                 newItem.CreatedAt = DateTime.Now;
                 newItem.UpdatedAt = DateTime.Now;
                 newItem.LastModifiedDate = DateTime.Now;
                 currentItems.Add(newItem);
 
-                var updatedList = await UpdateTodoListInOneDrive(currentItems);
+                var updatedList = await UpdateTodoListInOneDrive(key, currentItems);
 
                 _logger.LogInformation($"Successfully added new item: {newItem.Title}");
 
@@ -153,15 +153,15 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        public async Task<List<TodoItem>> DeleteTodoItem(TodoItem itemToDelete)
+        public async Task<List<TodoItem>> DeleteTodoItem(string key, TodoItem itemToDelete)
         {
             try
             {
                 _logger.LogInformation($"Attempting to delete todo item: {itemToDelete.Title}");
 
-                await GetFileContent(); // Ensure we have the latest content before deleting
+                await GetFileContent(key); // Ensure we have the latest content before deleting
 
-                var currentItems = await GetTodoListFromOneDrive();
+                var currentItems = await GetTodoListFromOneDrive(key);
                 var itemToRemove = currentItems.FirstOrDefault(i => i.ID == itemToDelete.ID);
 
                 if (itemToRemove != null)
@@ -170,7 +170,7 @@ namespace MickeyUtilityWeb.Services
                     itemToRemove.DeletedDate = DateTime.Now;
                     itemToRemove.LastModifiedDate = DateTime.Now;
 
-                    var updatedList = await UpdateTodoListInOneDrive(currentItems);
+                    var updatedList = await UpdateTodoListInOneDrive(key, currentItems);
 
                     _logger.LogInformation($"Successfully marked item as deleted: {itemToDelete.Title}");
 
@@ -189,11 +189,11 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        private async Task<byte[]> GetFileContent()
+        private async Task<byte[]> GetFileContent(string key)
         {
             try
             {
-                string fileId = await GetFileId();
+                string fileId = await _fileIdService.GetFileId(key);
                 return await _excelApiService.GetFileContent(fileId);
             }
             catch (Exception ex)

@@ -37,24 +37,24 @@ namespace MickeyUtilityWeb.Services
                 var (currentRows, _, _) = await _excelApiService.GetCurrentRange(fileId, WORKSHEET_NAME);
 
                 var updateData = new List<object[]>
-                {
-                    new object[] { "ID", "Title", "Description", "DueDate", "IsCompleted", "Category", "ParentTaskId", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
-                };
+            {
+                new object[] { "ID", "Title", "Description", "DueDate", "IsCompleted", "Category", "ParentTaskId", "CreatedAt", "UpdatedAt", "IsDeleted", "LastModifiedDate", "DeletedDate" }
+            };
 
                 updateData.AddRange(todoList.Select(item => new object[]
                 {
-                    item.ID,
-                    item.Title,
-                    item.Description,
-                    item.DueDate?.ToString("MM/dd/yyyy HH:mm"),
-                    item.IsCompleted,
-                    item.Category,
-                    item.ParentTaskId,
-                    item.CreatedAt.ToString("MM/dd/yyyy HH:mm"),
-                    item.UpdatedAt.ToString("MM/dd/yyyy HH:mm"),
-                    item.IsDeleted,
-                    item.LastModifiedDate.ToString("MM/dd/yyyy HH:mm"),
-                    item.DeletedDate?.ToString("MM/dd/yyyy HH:mm")
+                item.ID,
+                item.Title,
+                item.Description,
+                item.GetFormattedDueDate(),
+                item.IsCompleted,
+                item.Category,
+                item.ParentTaskId,
+                item.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fff"),
+                item.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fff"),
+                item.IsDeleted,
+                item.LastModifiedDate.ToString("yyyy-MM-ddTHH:mm:ss.fff"),
+                item.GetFormattedDeletedDate()
                 }));
 
                 while (updateData.Count < currentRows)
@@ -135,9 +135,7 @@ namespace MickeyUtilityWeb.Services
 
                 var currentItems = await GetTodoListFromOneDrive(key);
                 newItem.ID = GenerateNewId(currentItems, string.IsNullOrEmpty(newItem.ParentTaskId));
-                newItem.CreatedAt = DateTime.Now;
-                newItem.UpdatedAt = DateTime.Now;
-                newItem.LastModifiedDate = DateTime.Now;
+                // The constructor already sets CreatedAt, UpdatedAt, and LastModifiedDate
                 currentItems.Add(newItem);
 
                 var updatedList = await UpdateTodoListInOneDrive(key, currentItems);
@@ -153,41 +151,7 @@ namespace MickeyUtilityWeb.Services
             }
         }
 
-        public async Task<List<TodoItem>> DeleteTodoItem(string key, TodoItem itemToDelete)
-        {
-            try
-            {
-                _logger.LogInformation($"Attempting to delete todo item: {itemToDelete.Title}");
-
-                await GetFileContent(key); // Ensure we have the latest content before deleting
-
-                var currentItems = await GetTodoListFromOneDrive(key);
-                var itemToRemove = currentItems.FirstOrDefault(i => i.ID == itemToDelete.ID);
-
-                if (itemToRemove != null)
-                {
-                    itemToRemove.IsDeleted = true;
-                    itemToRemove.DeletedDate = DateTime.Now;
-                    itemToRemove.LastModifiedDate = DateTime.Now;
-
-                    var updatedList = await UpdateTodoListInOneDrive(key, currentItems);
-
-                    _logger.LogInformation($"Successfully marked item as deleted: {itemToDelete.Title}");
-
-                    return updatedList;
-                }
-                else
-                {
-                    _logger.LogWarning($"Item not found for deletion: {itemToDelete.Title}");
-                    return currentItems;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error deleting todo item: {itemToDelete.Title}");
-                throw;
-            }
-        }
+       
 
         private async Task<byte[]> GetFileContent(string key)
         {

@@ -1,0 +1,383 @@
+﻿@page "/itinerary"
+@using MickeyUtilityWeb.Services
+@using MickeyUtilityWeb.Models
+@using MickeyUtilityWeb.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject ItineraryService ItineraryService
+@inject NavigationManager NavigationManager
+@inject IAccessTokenProvider TokenProvider
+@inject IJSRuntime JSRuntime
+
+<link href="css/Itinerary/uiDesignItinerary.css" rel="stylesheet" />
+<link href="css/Shared/IconV2.css" rel="stylesheet" />
+<link href="css/Shared/Toast.css" rel="stylesheet" />
+
+<div class="pastel-app">
+    <AuthorizeView>
+        <Authorized>
+            <div class="pastel-header">
+                <h1 class="pastel-title">Trip Itinerary</h1>
+                <select @bind="selectedListKey" @bind:after="OnListSelectionChanged" class="pastel-select">
+                    @foreach (var list in availableLists)
+                    {
+                        <option value="@list.Key">@list.Key</option>
+                    }
+                </select>
+                <div class="pastel-flip-clock">
+                    <span class="flip-clock-digit">@DateTime.Now.ToString("HH:mm:ss")</span>
+                </div>
+            </div>
+
+            @if (isLoading)
+            {
+                <div class="pastel-loading">
+                    <div class="pastel-spinner"></div>
+                </div>
+            }
+            else if (errorMessage != null)
+            {
+                <div class="pastel-error">@errorMessage</div>
+            }
+            else if (itineraryItems != null && itineraryItems.Any())
+            {
+                <div class="pastel-main-content">
+                    <div class="pastel-search">
+                        <input type="text" placeholder="Search activities..." @bind="searchTerm" @bind:event="oninput" @onkeyup="FilterItems" />
+                    </div>
+                    <div class="pastel-tabs">
+                        @foreach (var day in itineraryItems.Select(item => item.Day).Distinct().OrderBy(d => d))
+                        {
+                            <button class="pastel-tab @(day == activeTab ? "active" : "")" @onclick="() => SetActiveTab(day)">
+                                Day @day
+                            </button>
+                        }
+                    </div>
+                    <div class="pastel-timeline">
+                        @foreach (var item in FilteredItineraryItems.Where(i => i.Day == activeTab))
+                        {
+                            <div class="pastel-item @(item.IsChecked ? "completed" : "")">
+                                <div class="pastel-item-time">@item.StartTime.ToString(@"hh\:mm") - @item.EndTime.ToString(@"hh\:mm")</div>
+                                <div class="pastel-item-content">
+                                    <div class="pastel-icon">@(ItineraryService.GetIconDescription(item.Icon).Split(' ')[0])</div>
+                                    <div class="pastel-item-details">
+                                        @if (editingItem == item)
+                                        {
+                                            <input class="pastel-edit-input" @bind="item.Activity" placeholder="Activity" />
+                                            <input class="pastel-edit-input" @bind="item.Location" placeholder="Location" />
+                                            <input type="time" class="pastel-edit-input" value="@item.StartTime.ToString(@"hh\:mm")" @onchange="@(e => UpdateStartTime(e, item))" />
+                                            <input type="time" class="pastel-edit-input" value="@item.EndTime.ToString(@"hh\:mm")" @onchange="@(e => UpdateEndTime(e, item))" />
+                                            <select class="pastel-edit-select" @bind="item.Icon">
+                                                @foreach (var icon in ItineraryService.GetIcons())
+                                                {
+                                                    <option value="@icon.Key">@icon.Value</option>
+                                                }
+                                            </select>
+                                        }
+                                        else
+                                        {
+                                            <h3 class="pastel-item-activity">@item.Activity</h3>
+                                            @if (!string.IsNullOrEmpty(item.Location))
+                                            {
+                                                <p class="pastel-item-location">@item.Location</p>
+                                            }
+                                            <p class="pastel-item-icon-description">@ItineraryService.GetIconDescription(item.Icon)</p>
+                                        }
+                                    </div>
+                                    <div class="pastel-item-actions">
+                                        @if (editingItem == item)
+                                        {
+                                            <button class="pastel-btn-icon" title="Save" @onclick="() => SaveEdit(item)">
+                                                <span class="icon icon-save"></span>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="pastel-btn-icon" title="Edit" @onclick="() => StartEdit(item)">
+                                                <span class="icon icon-edit"></span>
+                                            </button>
+                                        }
+                                        <button class="pastel-btn-icon" title="Delete" @onclick="() => RemoveItem(item)">
+                                            <span class="icon icon-delete"></span>
+                                        </button>
+                                        <button class="pastel-btn-icon" title="Toggle Completion" @onclick="() => ToggleCompleted(item)">
+                                            <span class="icon">@(item.IsChecked ? "✓" : "○")</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="pastel-right-sidebar">
+                    <h2>Trip Summary</h2>
+                    <div class="pastel-widget">
+                        <div class="pastel-widget-large">@itineraryItems.Count()</div>
+                        <div class="pastel-widget-small">Total Activities</div>
+                    </div>
+                    <div class="pastel-widget">
+                        <div class="pastel-widget-large">@itineraryItems.Count(i => i.IsChecked)</div>
+                        <div class="pastel-widget-small">Completed</div>
+                    </div>
+                    <div class="pastel-progress-bars">
+                        <div class="pastel-progress-item">
+                            <span>
+                                <span>Progress</span>
+                                <span>@($"{(int)(itineraryItems.Count(i => i.IsChecked) / (float)itineraryItems.Count() * 100)}%")</span>
+                            </span>
+                            <div class="pastel-progress-bar">
+                                <div style="width: @($"{(int)(itineraryItems.Count(i => i.IsChecked) / (float)itineraryItems.Count() * 100)}%")"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pastel-notes">
+                        <h3>Trip Notes</h3>
+                        <textarea class="pastel-notes-input" placeholder="Add your notes here..." @bind="tripNotes"></textarea>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p>No itinerary items found.</p>
+            }
+        </Authorized>
+        <NotAuthorized>
+            <p class="unauthorized-message">You need to log in to access the itinerary.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+<div class="pastel-add-activity" @onclick="AddNewItem">
+    <span class="icon icon-add"></span>
+</div>
+
+<Toast @ref="toast" />
+
+@code {
+    private List<ItineraryItem> itineraryItems = new List<ItineraryItem>();
+    private ItineraryItem newItem = new ItineraryItem { Date = DateTime.Today, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(10, 0, 0) };
+    private bool isLoading = true;
+    private string errorMessage;
+    private Toast toast;
+    private ItineraryItem editingItem;
+    private List<ExcelListItem> availableLists = new List<ExcelListItem>();
+    private string selectedListKey = "";
+    private string searchTerm = "";
+    private int activeTab = 1;
+    private string tripNotes = "";
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        if (authState.User.Identity.IsAuthenticated)
+        {
+            await LoadAvailableLists();
+            if (availableLists.Any())
+            {
+                selectedListKey = availableLists.First().Key;
+                await LoadItinerary();
+            }
+        }
+    }
+
+    private async Task LoadAvailableLists()
+    {
+        try
+        {
+            availableLists = await ItineraryService.GetAvailableLists();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading available lists: {ex.Message}";
+            await toast.ShowToast("Failed to load available lists", "error");
+        }
+    }
+
+    private async Task OnListSelectionChanged()
+    {
+        await LoadItinerary();
+    }
+
+    private async Task LoadItinerary()
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            itineraryItems = await ItineraryService.GetItineraryFromOneDrive(selectedListKey);
+
+            // Ensure all items have non-null properties
+            itineraryItems = itineraryItems.Select(item => new ItineraryItem
+                {
+                    ID = item.ID,
+                    IsChecked = item.IsChecked,
+                    Day = item.Day,
+                    Date = item.Date,
+                    StartTime = item.StartTime,
+                    EndTime = item.EndTime,
+                    Activity = item.Activity ?? string.Empty,
+                    Icon = item.Icon ?? "Other",
+                    Location = item.Location ?? string.Empty,
+                    CreatedAt = item.CreatedAt,
+                    UpdatedAt = item.UpdatedAt,
+                    IsDeleted = item.IsDeleted,
+                    LastModifiedDate = item.LastModifiedDate,
+                    DeletedDate = item.DeletedDate
+                }).ToList();
+
+            if (itineraryItems.Any())
+            {
+                activeTab = itineraryItems.Min(i => i.Day);
+            }
+            await toast.ShowToast("Itinerary loaded successfully", "success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading itinerary: {ex.Message}";
+            await toast.ShowToast("Failed to load itinerary", "error");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ToggleCompleted(ItineraryItem item)
+    {
+        item.IsChecked = !item.IsChecked;
+        item.UpdatedAt = DateTime.Now;
+        item.LastModifiedDate = DateTime.Now;
+        await UpdateItinerary();
+        await toast.ShowToast($"Activity {(item.IsChecked ? "completed" : "marked as incomplete")}", "info");
+    }
+
+    private async Task RemoveItem(ItineraryItem item)
+    {
+        try
+        {
+            item.IsDeleted = true;
+            item.DeletedDate = DateTime.UtcNow;
+            await ItineraryService.UpdateItineraryInOneDrive(selectedListKey, itineraryItems);
+            itineraryItems.Remove(item);
+            await toast.ShowToast("Activity removed successfully", "success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting activity: {ex.Message}";
+            await toast.ShowToast("Failed to remove activity", "error");
+        }
+    }
+
+    private async Task AddNewItem()
+    {
+        if (string.IsNullOrWhiteSpace(newItem.Activity))
+        {
+            await toast.ShowToast("Activity name is required", "error");
+            return;
+        }
+
+        try
+        {
+            newItem.CreatedAt = DateTime.Now;
+            newItem.UpdatedAt = DateTime.Now;
+            newItem.LastModifiedDate = DateTime.Now;
+            newItem.Icon = newItem.Icon ?? "Other";
+            newItem.Activity = newItem.Activity ?? string.Empty;
+            newItem.Location = newItem.Location ?? string.Empty;
+            newItem.Day = activeTab;
+            newItem.IsChecked = false;
+            newItem.IsDeleted = false;
+
+            await ItineraryService.AddItineraryItem(selectedListKey, newItem);
+            itineraryItems.Add(newItem);
+            newItem = new ItineraryItem
+                {
+                    Date = DateTime.Today,
+                    StartTime = TimeSpan.FromHours(9),
+                    EndTime = TimeSpan.FromHours(10),
+                    Icon = "Other",
+                    Activity = string.Empty,
+                    Location = string.Empty,
+                    Day = activeTab,
+                    IsChecked = false,
+                    IsDeleted = false
+                };
+            errorMessage = null;
+            await toast.ShowToast("New activity added successfully", "success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error adding new activity: {ex.Message}";
+            await toast.ShowToast("Failed to add new activity", "error");
+        }
+    }
+
+    private async Task UpdateItinerary()
+    {
+        try
+        {
+            await ItineraryService.UpdateItineraryInOneDrive(selectedListKey, itineraryItems);
+            errorMessage = null;
+            await toast.ShowToast("Itinerary updated successfully", "success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error updating itinerary: {ex.Message}";
+            await toast.ShowToast("Failed to update itinerary", "error");
+        }
+    }
+
+    private void StartEdit(ItineraryItem item)
+    {
+        editingItem = item;
+    }
+
+    private void CancelEdit()
+    {
+        editingItem = null;
+    }
+
+    private async Task SaveEdit(ItineraryItem item)
+    {
+        item.UpdatedAt = DateTime.Now;
+        item.LastModifiedDate = DateTime.Now;
+        editingItem = null;
+        await UpdateItinerary();
+        await toast.ShowToast("Activity updated successfully", "success");
+    }
+
+    private void SetActiveTab(int day)
+    {
+        activeTab = day;
+    }
+
+    private void FilterItems()
+    {
+        StateHasChanged();
+    }
+
+    private IEnumerable<ItineraryItem> FilteredItineraryItems =>
+     itineraryItems.Where(item =>
+         string.IsNullOrEmpty(searchTerm) ||
+         (item.Activity != null && item.Activity.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
+         (item.Location != null && item.Location.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)));
+
+    private void UpdateStartTime(ChangeEventArgs e, ItineraryItem item)
+    {
+        if (TimeSpan.TryParse((string)e.Value, out TimeSpan time))
+        {
+            item.StartTime = time;
+        }
+    }
+
+    private void UpdateEndTime(ChangeEventArgs e, ItineraryItem item)
+    {
+        if (TimeSpan.TryParse((string)e.Value, out TimeSpan time))
+        {
+            item.EndTime = time;
+        }
+    }
+}

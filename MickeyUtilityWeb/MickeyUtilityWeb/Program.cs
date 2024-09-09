@@ -30,7 +30,7 @@ builder.Services.AddMsalAuthentication(options =>
     options.ProviderOptions.Authentication.PostLogoutRedirectUri = baseAddress;
 });
 
-builder.Services.AddScoped<SGItineraryService>();
+builder.Services.AddScoped<ItineraryService>();
 builder.Services.AddScoped<ExcelApiService>();
 builder.Services.AddScoped<PurchaseListService>();
 builder.Services.AddScoped<TravelBudgetService>();

@@ -17,6 +17,12 @@
         <Authorized>
             <div class="page-header">
                 <h1 class="page-title">Shopping List</h1>
+                <select @bind="selectedListKey" @bind:after="OnListSelectionChanged">
+                    @foreach (var list in availableLists)
+                    {
+                        <option value="@list.Key">@list.Key</option>
+                    }
+                </select>
                 <div class="flip-clock">
                     <div class="flip-clock-item">@DateTime.Now.ToString("HH")</div>
                     <div class="flip-clock-item">@DateTime.Now.ToString("mm")</div>
@@ -138,6 +144,8 @@
     private Toast toast;
     private ShoppingItem editingItem;
     private string currentFilter = "all";
+    private List<ExcelListItem> availableLists = new List<ExcelListItem>();
+    private string selectedListKey = "";
 
     private IEnumerable<ShoppingItem> FilteredShoppingItems => currentFilter switch
     {
@@ -154,8 +162,31 @@
         var authState = await AuthenticationStateTask;
         if (authState.User.Identity.IsAuthenticated)
         {
-            await LoadShoppingList();
+            await LoadAvailableLists();
+            if (availableLists.Any())
+            {
+                selectedListKey = availableLists.First().Key;
+                await LoadShoppingList();
+            }
         }
+    }
+
+    private async Task LoadAvailableLists()
+    {
+        try
+        {
+            availableLists = await ShoppingListService.GetAvailableLists();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading available lists: {ex.Message}";
+            await toast.ShowToast("Failed to load available lists", "error");
+        }
+    }
+
+    private async Task OnListSelectionChanged()
+    {
+        await LoadShoppingList();
     }
 
     private async Task LoadShoppingList()
@@ -164,7 +195,7 @@
         errorMessage = null;
         try
         {
-            shoppingItems = await ShoppingListService.GetShoppingListFromOneDrive();
+            shoppingItems = await ShoppingListService.GetShoppingListFromOneDrive(selectedListKey);
             await toast.ShowToast("Shopping list loaded successfully", "success");
         }
         catch (Exception ex)
@@ -181,8 +212,8 @@
     private async Task TogglePurchased(ShoppingItem item)
     {
         item.IsPurchased = !item.IsPurchased;
-        item.UpdatedAt = DateTimeOffset.Now;
-        item.LastModifiedDate = DateTimeOffset.Now;
+        item.UpdatedAt = DateTime.Now;
+        item.LastModifiedDate = DateTime.Now;
         await UpdateShoppingList();
         await toast.ShowToast($"Item {(item.IsPurchased ? "marked as purchased" : "unmarked as purchased")}", "info");
     }
@@ -191,7 +222,7 @@
     {
         try
         {
-            shoppingItems = await ShoppingListService.DeleteShoppingItem(item);
+            shoppingItems = await ShoppingListService.DeleteShoppingItem(selectedListKey, item);
             errorMessage = null;
             await toast.ShowToast("Item removed successfully", "success");
         }
@@ -212,10 +243,10 @@
 
         try
         {
-            newItem.CreatedAt = DateTimeOffset.Now;
-            newItem.UpdatedAt = DateTimeOffset.Now;
-            newItem.LastModifiedDate = DateTimeOffset.Now;
-            shoppingItems = await ShoppingListService.AddShoppingItem(newItem);
+            newItem.CreatedAt = DateTime.Now;
+            newItem.UpdatedAt = DateTime.Now;
+            newItem.LastModifiedDate = DateTime.Now;
+            shoppingItems = await ShoppingListService.AddShoppingItem(selectedListKey, newItem);
             newItem = new ShoppingItem { Quantity = 1 };
             errorMessage = null;
             await toast.ShowToast("New item added successfully", "success");
@@ -231,7 +262,7 @@
     {
         try
         {
-            shoppingItems = await ShoppingListService.UpdateShoppingListInOneDrive(shoppingItems);
+            shoppingItems = await ShoppingListService.UpdateShoppingListInOneDrive(selectedListKey, shoppingItems);
             errorMessage = null;
             await toast.ShowToast("Shopping list updated successfully", "success");
         }
@@ -259,8 +290,8 @@
 
     private async Task SaveEdit(ShoppingItem item)
     {
-        item.UpdatedAt = DateTimeOffset.Now;
-        item.LastModifiedDate = DateTimeOffset.Now;
+        item.UpdatedAt = DateTime.Now;
+        item.LastModifiedDate = DateTime.Now;
         editingItem = null;
         await UpdateShoppingList();
         await toast.ShowToast("Item updated successfully", "success");

@@ -8,10 +8,10 @@
 @inject NavigationManager NavigationManager
 @inject IAccessTokenProvider TokenProvider
 @inject IJSRuntime JSRuntime
-
+@inject IconService IconService
 <link href="css/Shared/pastelPurpleWeb.css" rel="stylesheet" />
 <link href="css/Shared/Toast.css" rel="stylesheet" />
-
+<link href="css/Shared/IconV2.css" rel="stylesheet" />
 <div class="page-container">
     <AuthorizeView>
         <Authorized>
@@ -76,7 +76,13 @@
                     <input type="text" class="input-small" placeholder="Add a new task..." @bind="newItem.Title" @bind:event="oninput" />
                     <input type="text" class="input-small" placeholder="Description" @bind="newItem.Description" />
                     <input type="date" class="input-small" @bind="newItem.DueDate" />
-                    <input type="text" class="input-small" placeholder="Category" @bind="newItem.Category" />
+                    <select class="input-small" @bind="newItem.Category">
+                        <option value="">Select Category</option>
+                        @foreach (var icon in IconService.GetIcons())
+                        {
+                            <option value="@icon.Key">@icon.Value</option>
+                        }
+                    </select>
                     <select class="input-small" @bind="newItem.ParentTaskId">
                         <option value="">Select Parent Task (optional)</option>
                         @foreach (var item in todoItems.Where(i => string.IsNullOrEmpty(i.ParentTaskId)))
@@ -85,9 +91,7 @@
                         }
                     </select>
                     <button class="btn-primary" @onclick="AddNewItem">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <span class="icon-add"></span>
                     </button>
                 </div>
 
@@ -95,14 +99,20 @@
                     @foreach (var item in FilteredTodoItems.Where(i => string.IsNullOrEmpty(i.ParentTaskId)))
                     {
                         <li class="list-item @(item.IsCompleted ? "completed" : "") @(item.IsDeleted ? "deleted" : "")">
-                            <span class="item-category category-@item.Category.ToLower()">@item.Category</span>
+                            <span class="@IconService.GetIconClass(item.Category)"></span>
+                            <span class="item-category category-@item.Category.ToLower()">@(icons.ContainsKey(item.Category) ? icons[item.Category] : item.Category)</span>
                             @if (editingItem == item)
                             {
                                 <div class="edit-form">
                                     <input type="text" class="edit-input" @bind="item.Title" />
                                     <input type="text" class="edit-input" @bind="item.Description" />
                                     <input type="date" class="edit-date" @bind="item.DueDate" />
-                                    <input type="text" class="edit-input" @bind="item.Category" />
+                                    <select class="edit-input" @bind="item.Category">
+                                        @foreach (var icon in icons)
+                                        {
+                                            <option value="@icon.Key">@icon.Value</option>
+                                        }
+                                    </select>
                                     <div class="edit-actions">
                                         <button class="btn-save" @onclick="@(() => SaveEdit(item))">Save</button>
                                         <button class="btn-cancel" @onclick="CancelEdit">Cancel</button>
@@ -142,14 +152,20 @@
                                     @foreach (var subtask in FilteredTodoItems.Where(i => i.ParentTaskId == item.ID))
                                     {
                                         <li class="list-item subtask-item @(subtask.IsCompleted ? "completed" : "") @(subtask.IsDeleted ? "deleted" : "")">
-                                            <span class="item-category category-@subtask.Category.ToLower()">@subtask.Category</span>
+                                            <span class="@IconService.GetIconClass(subtask.Category)"></span>
+                                            <span class="item-category category-@subtask.Category.ToLower()">@(icons.ContainsKey(subtask.Category) ? icons[subtask.Category] : subtask.Category)</span>
                                             @if (editingItem == subtask)
                                             {
                                                 <div class="edit-form">
                                                     <input type="text" class="edit-input" @bind="subtask.Title" />
                                                     <input type="text" class="edit-input" @bind="subtask.Description" />
                                                     <input type="date" class="edit-date" @bind="subtask.DueDate" />
-                                                    <input type="text" class="edit-input" @bind="subtask.Category" />
+                                                    <select class="edit-input" @bind="subtask.Category">
+                                                        @foreach (var icon in icons)
+                                                        {
+                                                            <option value="@icon.Key">@icon.Value</option>
+                                                        }
+                                                    </select>
                                                     <div class="edit-actions">
                                                         <button class="btn-save" @onclick="@(() => SaveEdit(subtask))">Save</button>
                                                         <button class="btn-cancel" @onclick="CancelEdit">Cancel</button>
@@ -208,7 +224,7 @@
     private HashSet<string> expandedItems = new HashSet<string>();
     private List<ExcelListItem> availableLists = new List<ExcelListItem>();
     private string selectedListKey = "";
-
+    private Dictionary<string, string> icons;
     private IEnumerable<TodoItem> FilteredTodoItems => currentFilter switch
     {
         "completed" => todoItems.Where(item => item.IsCompleted && !item.IsDeleted),
@@ -221,6 +237,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        icons = IconService.GetIcons();
         var authState = await AuthenticationStateTask;
         if (authState.User.Identity.IsAuthenticated)
         {

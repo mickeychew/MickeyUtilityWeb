@@ -102,7 +102,7 @@ namespace MickeyUtilityWeb.Services
                             Description = worksheet.Cells[row, 3].Value?.ToString(),
                             DueDate = DateTime.TryParse(worksheet.Cells[row, 4].Value?.ToString(), out var dueDate) ? dueDate : (DateTime?)null,
                             IsCompleted = bool.Parse(worksheet.Cells[row, 5].Value?.ToString() ?? "false"),
-                            Category = worksheet.Cells[row, 6].Value?.ToString() ?? "Uncategorized",
+                            Category = worksheet.Cells[row, 6].Value?.ToString() ?? "icon-default",
                             ParentTaskId = worksheet.Cells[row, 7].Value?.ToString(),
                             CreatedAt = DateTime.Parse(worksheet.Cells[row, 8].Value?.ToString() ?? DateTime.Now.ToString("MM/dd/yyyy HH:mm")),
                             UpdatedAt = DateTime.Parse(worksheet.Cells[row, 9].Value?.ToString() ?? DateTime.Now.ToString("MM/dd/yyyy HH:mm")),

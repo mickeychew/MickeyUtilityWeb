@@ -1,0 +1,474 @@
+﻿@page "/purchasetrackerlist"
+@using MickeyUtilityWeb.Services
+@using MickeyUtilityWeb.Models
+@using MickeyUtilityWeb.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject PurchaseTrackerService PurchaseTrackerService
+@inject NavigationManager NavigationManager
+@inject IAccessTokenProvider TokenProvider
+@inject IJSRuntime JSRuntime
+<link href="css/PurchaseList/purchasetracker.css" rel="stylesheet" />
+<link href="css/Shared/Toast.css" rel="stylesheet" />
+<div class="mobile-container">
+    <AuthorizeView>
+        <Authorized>
+            <header class="mobile-header">
+                <h1>Purchase Tracker</h1>
+                <select @bind="selectedListKey" @bind:after="OnListSelectionChanged" class="list-selector">
+                    @foreach (var list in availableLists)
+                    {
+                        <option value="@list.Key">@list.Key</option>
+                    }
+                </select>
+            </header>
+
+            <div class="stats-panel">
+                <div class="stat-card">
+                    <span class="stat-label">Total Items</span>
+                    <span class="stat-value">@purchaseItems.Count</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Total Cost</span>
+                    <span class="stat-value">@FormatCurrency(GetTotalCost())</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Payment Progress</span>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: @GetOverallPaymentProgress()%"></div>
+                        </div>
+                        <span class="progress-text">@FormatPercentage(GetOverallPaymentProgress())%</span>
+                    </div>
+                </div>
+            </div>
+
+            @if (isLoading)
+            {
+                <div class="loading-spinner"></div>
+            }
+            else if (errorMessage != null)
+            {
+                <div class="error-message">
+                    <p>@errorMessage</p>
+                    <button class="retry-button" @onclick="TryAgain">Try Again</button>
+                </div>
+            }
+            else
+            {
+                <div class="add-item-section">
+                    <div class="input-group">
+                        <input type="text" 
+                               class="form-input" 
+                               placeholder="Product Name" 
+                               @bind="newItem.ProductName" 
+                               @bind:event="oninput" />
+                        <input type="text" 
+                               class="form-input" 
+                               placeholder="Category" 
+                               @bind="newItem.Category" />
+                    </div>
+                    <div class="input-group">
+                        <input type="text" 
+                               class="form-input" 
+                               placeholder="Shop Name" 
+                               @bind="newItem.ShopName" />
+                        <input type="number" 
+                               class="form-input" 
+                               placeholder="Price" 
+                               @bind="newItem.OriginalPrice" />
+                    </div>
+                    <div class="input-group">
+                        <select class="form-input" @bind="paymentType">
+                            <option value="">Payment Type</option>
+                            <option value="free">Free Item</option>
+                            <option value="full">Full Payment</option>
+                            <option value="partial">Partial Payment</option>
+                        </select>
+                        <button class="add-button" @onclick="AddNewItem">
+                            Add Item
+                        </button>
+                    </div>
+                </div>
+
+                <div class="items-list">
+                    @foreach (var item in purchaseItems.Where(i => !i.IsDeleted).OrderByDescending(i => i.CreatedAt))
+                    {
+                        <div class="item-card @(item.IsItemReceived ? "received" : "pending")">
+                            @if (editingItem?.ID == item.ID)
+                            {
+                                <div class="edit-form">
+                                    <input type="text" 
+                                           class="form-input" 
+                                           placeholder="Product Name" 
+                                           @bind="editingItem.ProductName" />
+                                    <input type="text" 
+                                           class="form-input" 
+                                           placeholder="Category" 
+                                           @bind="editingItem.Category" />
+                                    <input type="text" 
+                                           class="form-input" 
+                                           placeholder="Shop Name" 
+                                           @bind="editingItem.ShopName" />
+                                    <input type="number" 
+                                           class="form-input" 
+                                           placeholder="Price" 
+                                           @bind="editingItem.OriginalPrice" />
+                                    <select class="form-input" 
+                                            @onchange="@(e => HandlePaymentTypeChange(e, editingItem))">
+                                        <option value="">Payment Type</option>
+                                        <option value="free">Free Item</option>
+                                        <option value="full">Full Payment</option>
+                                        <option value="partial">Partial Payment</option>
+                                    </select>
+                                    <div class="edit-actions">
+                                        <button class="save-button" @onclick="SaveEdit">Save</button>
+                                        <button class="cancel-button" @onclick="CancelEdit">Cancel</button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="item-header">
+                                    <div class="item-title">
+                                        <h3>@item.ProductName</h3>
+                                        <span class="category-tag">@item.Category</span>
+                                    </div>
+                                    <div class="price-info">
+                                        @if (item.HasDiscount)
+                                        {
+                                            <span class="original-price">@FormatCurrency(item.OriginalPrice)</span>
+                                            <span class="discount">
+                                                @(item.DiscountPercentage.HasValue
+                                                    ? $"-{item.DiscountPercentage:F1}%"
+                                                    : $"-{FormatCurrency(item.DiscountAmount)}")
+                                            </span>
+                                        }
+                                        <span class="final-price">@FormatCurrency(item.ItemPrice)</span>
+                                    </div>
+                                </div>
+
+                                <div class="item-details">
+                                    <div class="detail-row">
+                                        <span class="label">Shop:</span>
+                                        <span class="value">@item.ShopName</span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(item.ContactPerson))
+                                    {
+                                        <div class="detail-row">
+                                            <span class="label">Contact:</span>
+                                            <span class="value">@item.ContactPerson</span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(item.InvoiceNumber))
+                                    {
+                                        <div class="detail-row">
+                                            <span class="label">Invoice:</span>
+                                            <span class="value">@item.InvoiceNumber</span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="payment-status">
+                                    <div class="status-badge @GetPaymentStatusClass(item)">
+                                        @item.PaymentProgress
+                                    </div>
+                                    @if (item.PaymentProgress != "Free")
+                                    {
+                                        <div class="payment-progress">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" 
+                                                     style="width: @(item.PaymentProgress?.TrimEnd('%'))%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="payment-amounts">
+                                            <span>Paid: @FormatCurrency((item.TotalPaid ?? 0) + (item.DepositAmount ?? 0))</span>
+                                            @if (item.RemainingAmount > 0)
+                                            {
+                                                <span>Remaining: @FormatCurrency(item.RemainingAmount)</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="delivery-status">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" 
+                                               checked="@item.IsItemReceived" 
+                                               @onchange="@(e => ToggleReceived(item))" />
+                                        <span class="slider"></span>
+                                        <span class="toggle-label">
+                                            @(item.IsItemReceived ? "Received" : "Pending")
+                                        </span>
+                                    </label>
+                                </div>
+
+                                <div class="item-actions">
+                                    <button class="action-button edit" @onclick="() => StartEdit(item)">
+                                        Edit
+                                    </button>
+                                    <button class="action-button delete" @onclick="() => RemoveItem(item)">
+                                        Delete
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </Authorized>
+        <NotAuthorized>
+            <div class="unauthorized">
+                <p>Please log in to access the purchase tracker.</p>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+<Toast @ref="toast" />
+
+@code {
+    private List<PurchaseTrackerItem> purchaseItems = new List<PurchaseTrackerItem>();
+    private PurchaseTrackerItem newItem = new PurchaseTrackerItem();
+    private bool isLoading = true;
+    private string errorMessage;
+    private Toast toast;
+    private PurchaseTrackerItem editingItem;
+    private List<ExcelListItem> availableLists = new List<ExcelListItem>();
+    private string selectedListKey = "";
+    private string paymentType = "";
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        if (authState.User.Identity.IsAuthenticated)
+        {
+            await LoadAvailableLists();
+            if (availableLists.Any())
+            {
+                selectedListKey = availableLists.First().Key;
+                await LoadPurchaseList();
+            }
+        }
+    }
+
+    private async Task LoadAvailableLists()
+    {
+        try
+        {
+            availableLists = await PurchaseTrackerService.GetAvailableLists();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading lists: {ex.Message}";
+            await toast.ShowToast("Failed to load lists", "error");
+        }
+    }
+
+    private async Task OnListSelectionChanged()
+    {
+        await LoadPurchaseList();
+    }
+
+    private async Task LoadPurchaseList()
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            purchaseItems = await PurchaseTrackerService.GetPurchaseListFromOneDrive(selectedListKey);
+            await toast.ShowToast("List loaded successfully", "success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading list: {ex.Message}";
+            await toast.ShowToast("Failed to load list", "error");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ToggleReceived(PurchaseTrackerItem item)
+    {
+        item.IsItemReceived = !item.IsItemReceived;
+        item.UpdatedAt = DateTime.Now;
+        item.LastModifiedDate = DateTime.Now;
+        await UpdatePurchaseList();
+        await toast.ShowToast($"Item {(item.IsItemReceived ? "marked as received" : "marked as pending")}", "info");
+    }
+
+    private async Task RemoveItem(PurchaseTrackerItem item)
+    {
+        try
+        {
+            purchaseItems = await PurchaseTrackerService.DeletePurchaseItem(selectedListKey, item);
+            errorMessage = null;
+            await toast.ShowToast("Item removed", "success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error removing item: {ex.Message}";
+            await toast.ShowToast("Failed to remove item", "error");
+        }
+    }
+
+    private async Task AddNewItem()
+    {
+        if (string.IsNullOrWhiteSpace(newItem.ProductName))
+        {
+            await toast.ShowToast("Product name is required", "error");
+            return;
+        }
+
+        try
+        {
+            if (!string.IsNullOrEmpty(paymentType))
+            {
+                newItem.SetPaymentType(paymentType);
+            }
+
+            newItem.CreatedAt = DateTime.Now;
+            newItem.UpdatedAt = DateTime.Now;
+            newItem.LastModifiedDate = DateTime.Now;
+            purchaseItems = await PurchaseTrackerService.AddPurchaseItem(selectedListKey, newItem);
+            newItem = new PurchaseTrackerItem();
+            paymentType = "";
+            errorMessage = null;
+            await toast.ShowToast("Item added successfully", "success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error adding item: {ex.Message}";
+            await toast.ShowToast("Failed to add item", "error");
+        }
+    }
+
+    private async Task UpdatePurchaseList()
+    {
+        try
+        {
+            purchaseItems = await PurchaseTrackerService.UpdatePurchaseListInOneDrive(selectedListKey, purchaseItems);
+            errorMessage = null;
+            await toast.ShowToast("List updated successfully", "success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error updating list: {ex.Message}";
+            await toast.ShowToast("Failed to update list", "error");
+        }
+    }
+
+    private void HandlePaymentTypeChange(ChangeEventArgs e, PurchaseTrackerItem item)
+    {
+        var type = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(type))
+        {
+            item.SetPaymentType(type);
+            StateHasChanged();
+        }
+    }
+
+    private void TryAgain()
+    {
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+
+    private void StartEdit(PurchaseTrackerItem item)
+    {
+        editingItem = new PurchaseTrackerItem
+        {
+            ID = item.ID,
+            ProductName = item.ProductName,
+            Category = item.Category,
+            ShopName = item.ShopName,
+            ContactPerson = item.ContactPerson,
+            ContactNumber = item.ContactNumber,
+            InvoiceNumber = item.InvoiceNumber,
+            OriginalPrice = item.OriginalPrice,
+            DiscountAmount = item.DiscountAmount,
+            DiscountPercentage = item.DiscountPercentage,
+            ItemPrice = item.ItemPrice,
+            PaymentType = item.PaymentType,
+            PaymentProgress = item.PaymentProgress,
+            IsItemReceived = item.IsItemReceived
+        };
+    }
+
+    private void CancelEdit()
+    {
+        editingItem = null;
+    }
+
+    private async Task SaveEdit()
+    {
+        var item = purchaseItems.FirstOrDefault(i => i.ID == editingItem.ID);
+        if (item != null)
+        {
+            item.ProductName = editingItem.ProductName;
+            item.Category = editingItem.Category;
+            item.ShopName = editingItem.ShopName;
+            item.ContactPerson = editingItem.ContactPerson;
+            item.ContactNumber = editingItem.ContactNumber;
+            item.InvoiceNumber = editingItem.InvoiceNumber;
+            item.OriginalPrice = editingItem.OriginalPrice;
+            item.DiscountAmount = editingItem.DiscountAmount;
+            item.DiscountPercentage = editingItem.DiscountPercentage;
+            item.ItemPrice = editingItem.ItemPrice;
+            item.PaymentType = editingItem.PaymentType;
+            item.PaymentProgress = editingItem.PaymentProgress;
+            item.IsItemReceived = editingItem.IsItemReceived;
+            item.UpdatedAt = DateTime.Now;
+            item.LastModifiedDate = DateTime.Now;
+            item.CalculateValues();
+        }
+
+        editingItem = null;
+        await UpdatePurchaseList();
+        await toast.ShowToast("Item updated successfully", "success");
+    }
+
+    private decimal GetTotalCost()
+    {
+        return purchaseItems.Where(i => !i.IsDeleted).Sum(i => i.ItemPrice ?? 0m);
+    }
+
+    private decimal GetOverallPaymentProgress()
+    {
+        var items = purchaseItems.Where(i => !i.IsDeleted && i.PaymentProgress != "Free").ToList();
+        if (!items.Any()) return 0;
+
+        var totalPrice = items.Sum(i => i.ItemPrice ?? 0m);
+        if (totalPrice == 0) return 0;
+
+        var totalPaid = items.Sum(i => (i.TotalPaid ?? 0m) + (i.DepositAmount ?? 0m));
+        return (totalPaid / totalPrice) * 100m;
+    }
+
+    private string GetPaymentStatusClass(PurchaseTrackerItem item)
+    {
+        return item.PaymentProgress switch
+        {
+            "Free" => "status-free",
+            "100%" => "status-paid",
+            "0%" => "status-unpaid",
+            _ => "status-partial"
+        };
+    }
+
+    private string FormatCurrency(decimal? value)
+    {
+        if (!value.HasValue) return "RM 0.00";
+        return $"RM {value.Value:N2}";
+    }
+
+    private string FormatPercentage(decimal value)
+    {
+        return $"{value:F1}";
+    }
+}

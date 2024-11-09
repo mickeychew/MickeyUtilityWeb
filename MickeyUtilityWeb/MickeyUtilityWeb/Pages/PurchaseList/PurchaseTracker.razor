@@ -1,6 +1,7 @@
 ﻿@page "/purchasetrackerlist"
 @using MickeyUtilityWeb.Services
 @using MickeyUtilityWeb.Models
+@using MickeyUtilityWeb.Services.SharedServices
 @using MickeyUtilityWeb.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
@@ -8,40 +9,52 @@
 @inject NavigationManager NavigationManager
 @inject IAccessTokenProvider TokenProvider
 @inject IJSRuntime JSRuntime
+@inject EmojiIconService EmojiIconService
+
 <link href="css/PurchaseList/purchasetracker.css" rel="stylesheet" />
 <link href="css/Shared/Toast.css" rel="stylesheet" />
-<div class="mobile-container">
+
+<div class="container @(isDarkMode ? "dark-mode" : "")">
     <AuthorizeView>
         <Authorized>
-            <header class="mobile-header">
-                <h1>Purchase Tracker</h1>
-                <select @bind="selectedListKey" @bind:after="OnListSelectionChanged" class="list-selector">
-                    @foreach (var list in availableLists)
-                    {
-                        <option value="@list.Key">@list.Key</option>
-                    }
-                </select>
-            </header>
-
-            <div class="stats-panel">
-                <div class="stat-card">
-                    <span class="stat-label">Total Items</span>
-                    <span class="stat-value">@purchaseItems.Count</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Total Cost</span>
-                    <span class="stat-value">@FormatCurrency(GetTotalCost())</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Payment Progress</span>
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: @GetOverallPaymentProgress()%"></div>
+            <header class="header">
+                <div class="header-top">
+                    <div class="header-left">
+                        <h1 class="title">Purchase Tracker</h1>
+                        <div class="list-selector">
+                            <label for="list-select">Selected List:</label>
+                            <select id="list-select" @bind="selectedListKey" @bind:after="OnListSelectionChanged" class="select">
+                                @foreach (var list in availableLists)
+                                {
+                                    <option value="@list.Key">@list.Key</option>
+                                }
+                            </select>
                         </div>
-                        <span class="progress-text">@FormatPercentage(GetOverallPaymentProgress())%</span>
+                    </div>
+                    <div class="header-right">
+                        <div class="stats-widget">
+                            <div class="total-cost">Total Cost: @FormatCurrency(GetTotalCost())</div>
+                            <div class="item-count">Total Items: @purchaseItems.Count</div>
+                            <div class="pending-payment">Payment Progress: @FormatPercentage(GetOverallPaymentProgress())%</div>
+                        </div>
+                        <div class="dark-mode-toggle">
+                            <label class="switch">
+                                <input type="checkbox" @bind="isDarkMode">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
-            </div>
+                <div class="action-buttons">
+                    <button class="btn btn-add" @onclick="StartAddingItem">
+                        <span class="icon">➕</span> Add Item
+                    </button>
+                    <button class="btn btn-view" @onclick="() => isGridView = !isGridView">
+                        <span class="icon">@(isGridView ? "📋" : "📑")</span>
+                        @(isGridView ? "List View" : "Grid View")
+                    </button>
+                </div>
+            </header>
 
             @if (isLoading)
             {
@@ -56,161 +69,511 @@
             }
             else
             {
-                <div class="add-item-section">
-                    <div class="input-group">
-                        <input type="text" 
-                               class="form-input" 
-                               placeholder="Product Name" 
-                               @bind="newItem.ProductName" 
-                               @bind:event="oninput" />
-                        <input type="text" 
-                               class="form-input" 
-                               placeholder="Category" 
-                               @bind="newItem.Category" />
-                    </div>
-                    <div class="input-group">
-                        <input type="text" 
-                               class="form-input" 
-                               placeholder="Shop Name" 
-                               @bind="newItem.ShopName" />
-                        <input type="number" 
-                               class="form-input" 
-                               placeholder="Price" 
-                               @bind="newItem.OriginalPrice" />
-                    </div>
-                    <div class="input-group">
-                        <select class="form-input" @bind="paymentType">
-                            <option value="">Payment Type</option>
-                            <option value="free">Free Item</option>
-                            <option value="full">Full Payment</option>
-                            <option value="partial">Partial Payment</option>
-                        </select>
-                        <button class="add-button" @onclick="AddNewItem">
-                            Add Item
-                        </button>
-                    </div>
-                </div>
-
-                <div class="items-list">
-                    @foreach (var item in purchaseItems.Where(i => !i.IsDeleted).OrderByDescending(i => i.CreatedAt))
-                    {
-                        <div class="item-card @(item.IsItemReceived ? "received" : "pending")">
-                            @if (editingItem?.ID == item.ID)
-                            {
-                                <div class="edit-form">
-                                    <input type="text" 
-                                           class="form-input" 
-                                           placeholder="Product Name" 
-                                           @bind="editingItem.ProductName" />
-                                    <input type="text" 
-                                           class="form-input" 
-                                           placeholder="Category" 
-                                           @bind="editingItem.Category" />
-                                    <input type="text" 
-                                           class="form-input" 
-                                           placeholder="Shop Name" 
-                                           @bind="editingItem.ShopName" />
-                                    <input type="number" 
-                                           class="form-input" 
-                                           placeholder="Price" 
-                                           @bind="editingItem.OriginalPrice" />
-                                    <select class="form-input" 
-                                            @onchange="@(e => HandlePaymentTypeChange(e, editingItem))">
-                                        <option value="">Payment Type</option>
-                                        <option value="free">Free Item</option>
-                                        <option value="full">Full Payment</option>
-                                        <option value="partial">Partial Payment</option>
-                                    </select>
-                                    <div class="edit-actions">
-                                        <button class="save-button" @onclick="SaveEdit">Save</button>
-                                        <button class="cancel-button" @onclick="CancelEdit">Cancel</button>
+                @if (isAddingItem)
+                {
+                    <div class="modal-overlay">
+                        <div class="add-item-form">
+                            <div class="form-header">
+                                <h2><span class="icon">➕</span> Add New Item</h2>
+                                <button class="btn-close" @onclick="CancelAddingItem">✕</button>
+                            </div>
+                            <div class="form-content">
+                                <div class="form-section">
+                                    <div class="section-header">
+                                        <span class="icon">📝</span>
+                                        <label>Product Details</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <div class="input-wrapper">
+                                            <span class="input-icon">📦</span>
+                                            <input type="text"
+                                                   placeholder="Product Name"
+                                                   @bind="newItem.ProductName"
+                                                   class="form-input" />
+                                        </div>
+                                        <div class="input-wrapper">
+                                            <span class="input-icon">🏷️</span>
+                                            <select @bind="newItem.Category" class="form-input">
+                                                <option value="">Select Category</option>
+                                                @foreach (var icon in EmojiIconService.GetIcons())
+                                                {
+                                                    <option value="@icon.Key">@icon.Value.Emoji @icon.Value.DisplayName</option>
+                                                }
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
-                            }
-                            else
-                            {
-                                <div class="item-header">
-                                    <div class="item-title">
-                                        <h3>@item.ProductName</h3>
-                                        <span class="category-tag">@item.Category</span>
+
+                                <div class="form-section">
+                                    <div class="section-header">
+                                        <span class="icon">💰</span>
+                                        <label>Price Details</label>
                                     </div>
-                                    <div class="price-info">
-                                        @if (item.HasDiscount)
-                                        {
-                                            <span class="original-price">@FormatCurrency(item.OriginalPrice)</span>
-                                            <span class="discount">
-                                                @(item.DiscountPercentage.HasValue
-                                                    ? $"-{item.DiscountPercentage:F1}%"
-                                                    : $"-{FormatCurrency(item.DiscountAmount)}")
+                                    <div class="input-group">
+                                        <div class="input-wrapper">
+                                            <span class="input-icon">💵</span>
+                                            <input type="number"
+                                                   placeholder="Original Price"
+                                                   @bind="newItem.OriginalPrice"
+                                                   class="form-input" />
+                                        </div>
+                                        <div class="input-wrapper">
+                                            <span class="input-icon">💳</span>
+                                            <select @bind="paymentType" class="form-input">
+                                                <option value="">Payment Status</option>
+                                                <option value="free">Free Item</option>
+                                                <option value="full">Full Payment</option>
+                                                <option value="partial">Partial Payment</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <div class="section-header">
+                                        <span class="icon">🏪</span>
+                                        <label>Shop Details</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <div class="input-wrapper">
+                                            <span class="input-icon">🏢</span>
+                                            <input type="text"
+                                                   placeholder="Shop Name"
+                                                   @bind="newItem.ShopName"
+                                                   class="form-input" />
+                                        </div>
+                                        <div class="input-wrapper">
+                                            <span class="input-icon">👤</span>
+                                            <input type="text"
+                                                   placeholder="Contact Person"
+                                                   @bind="newItem.ContactPerson"
+                                                   class="form-input" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <div class="section-header">
+                                        <span class="icon">📦</span>
+                                        <label>Delivery Status</label>
+                                    </div>
+                                    <div class="delivery-toggle">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" @bind="newItem.IsItemReceived" />
+                                            <span class="slider"></span>
+                                            <span class="toggle-label">
+                                                <span class="icon">@(newItem.IsItemReceived ? "✅" : "⏳")</span>
+                                                @(newItem.IsItemReceived ? "Item Received" : "Item Pending")
                                             </span>
-                                        }
-                                        <span class="final-price">@FormatCurrency(item.ItemPrice)</span>
+                                        </label>
                                     </div>
                                 </div>
 
-                                <div class="item-details">
-                                    <div class="detail-row">
-                                        <span class="label">Shop:</span>
-                                        <span class="value">@item.ShopName</span>
-                                    </div>
-                                    @if (!string.IsNullOrEmpty(item.ContactPerson))
-                                    {
-                                        <div class="detail-row">
-                                            <span class="label">Contact:</span>
-                                            <span class="value">@item.ContactPerson</span>
-                                        </div>
-                                    }
-                                    @if (!string.IsNullOrEmpty(item.InvoiceNumber))
-                                    {
-                                        <div class="detail-row">
-                                            <span class="label">Invoice:</span>
-                                            <span class="value">@item.InvoiceNumber</span>
-                                        </div>
-                                    }
+                                <div class="form-actions">
+                                    <button class="btn btn-save" @onclick="AddNewItem">
+                                        <span class="icon">💾</span> Save
+                                    </button>
+                                    <button class="btn btn-cancel" @onclick="CancelAddingItem">
+                                        <span class="icon">✖️</span> Cancel
+                                    </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                }
 
-                                <div class="payment-status">
-                                    <div class="status-badge @GetPaymentStatusClass(item)">
-                                        @item.PaymentProgress
-                                    </div>
-                                    @if (item.PaymentProgress != "Free")
-                                    {
-                                        <div class="payment-progress">
-                                            <div class="progress-bar">
-                                                <div class="progress-fill" 
-                                                     style="width: @(item.PaymentProgress?.TrimEnd('%'))%">
-                                                </div>
+                <div class="content-area">
+                    @if (isGridView)
+                    {
+                        <div class="grid-view">
+                            @foreach (var category in purchaseItems.Where(i => !i.IsDeleted)
+                                                                  .Select(i => i.Category)
+                                                                  .Distinct())
+                            {
+                                var categoryItems = purchaseItems.Where(i => i.Category == category && !i.IsDeleted);
+                                var (emoji, displayName) = EmojiIconService.GetIcon(category);
+                                var categoryColor = EmojiIconService.GetCategoryColor(category);
+
+                                <div class="category-section @(IsCategoryExpanded(category) ? "expanded" : "")"
+                                     style="--category-color: @categoryColor">
+                                    <div class="category-header" @onclick="() => ToggleCategoryExpand(category)">
+                                        <div class="category-title">
+                                            <span class="category-emoji">@emoji</span>
+                                            <span class="category-name">@displayName</span>
+                                        </div>
+                                        <div class="category-stats">
+                                            <span class="item-count">
+                                                <span class="icon">📦</span>
+                                                @categoryItems.Count() items
+                                            </span>
+                                            <div class="payment-progress">
+                                                <span class="icon">💰</span>
+                                                @FormatCurrency(GetCategoryTotal(category))
                                             </div>
+                                            <span class="expand-icon">
+                                                @(IsCategoryExpanded(category) ? "🔽" : "▶️")
+                                            </span>
                                         </div>
-                                        <div class="payment-amounts">
-                                            <span>Paid: @FormatCurrency((item.TotalPaid ?? 0) + (item.DepositAmount ?? 0))</span>
-                                            @if (item.RemainingAmount > 0)
+                                    </div>
+
+                                    @if (IsCategoryExpanded(category))
+                                    {
+                                        <div class="items-grid">
+                                            @foreach (var item in categoryItems)
                                             {
-                                                <span>Remaining: @FormatCurrency(item.RemainingAmount)</span>
+                                                if (editingItem?.ID == item.ID)
+                                                {
+                                                    <div class="item-card editing">
+                                                        <div class="edit-form">
+                                                            <div class="form-header">
+                                                                <h3><span class="icon">✏️</span> Edit Item</h3>
+                                                                <button class="btn-close" @onclick="CancelEdit">✕</button>
+                                                            </div>
+                                                            <div class="form-content">
+                                                                <div class="form-section">
+                                                                    <div class="section-header">
+                                                                        <span class="icon">📝</span>
+                                                                        <label>Product Details</label>
+                                                                    </div>
+                                                                    <div class="input-group">
+                                                                        <div class="input-wrapper">
+                                                                            <span class="input-icon">📦</span>
+                                                                            <input type="text"
+                                                                                   placeholder="Product Name"
+                                                                                   @bind="editingItem.ProductName"
+                                                                                   class="form-input" />
+                                                                        </div>
+                                                                        <div class="input-wrapper">
+                                                                            <span class="input-icon">🏷️</span>
+                                                                            <select @bind="editingItem.Category" class="form-input">
+                                                                                <option value="">Select Category</option>
+                                                                                @foreach (var icon in EmojiIconService.GetIcons())
+                                                                                {
+                                                                                    <option value="@icon.Key">@icon.Value.Emoji @icon.Value.DisplayName</option>
+                                                                                }
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="form-section">
+                                                                    <div class="section-header">
+                                                                        <span class="icon">💰</span>
+                                                                        <label>Price Details</label>
+                                                                    </div>
+                                                                    <div class="input-group">
+                                                                        <div class="input-wrapper">
+                                                                            <span class="input-icon">💵</span>
+                                                                            <input type="number"
+                                                                                   placeholder="Original Price"
+                                                                                   @bind="editingItem.OriginalPrice"
+                                                                                   class="form-input" />
+                                                                        </div>
+                                                                        <div class="input-wrapper">
+                                                                            <span class="input-icon">💳</span>
+                                                                            <select value="@paymentType"
+                                                                                    @onchange="@(e => {
+            paymentType = e.Value?.ToString();
+            HandlePaymentTypeChange(e, editingItem);
+        })"
+                                                                                    class="form-input">
+                                                                                <option value="">Payment Status</option>
+                                                                                <option value="free">Free Item</option>
+                                                                                <option value="full">Full Payment</option>
+                                                                                <option value="partial">Partial Payment</option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="form-section">
+                                                                    <div class="section-header">
+                                                                        <span class="icon">🏪</span>
+                                                                        <label>Shop Details</label>
+                                                                    </div>
+                                                                    <div class="input-group">
+                                                                        <div class="input-wrapper">
+                                                                            <span class="input-icon">🏢</span>
+                                                                            <input type="text"
+                                                                                   placeholder="Shop Name"
+                                                                                   @bind="editingItem.ShopName"
+                                                                                   class="form-input" />
+                                                                        </div>
+                                                                        <div class="input-wrapper">
+                                                                            <span class="input-icon">👤</span>
+                                                                            <input type="text"
+                                                                                   placeholder="Contact Person"
+                                                                                   @bind="editingItem.ContactPerson"
+                                                                                   class="form-input" />
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="form-section">
+                                                                    <div class="section-header">
+                                                                        <span class="icon">📦</span>
+                                                                        <label>Delivery Status</label>
+                                                                    </div>
+                                                                    <div class="delivery-toggle">
+                                                                        <label class="toggle-switch">
+                                                                            <input type="checkbox" @bind="editingItem.IsItemReceived" />
+                                                                            <span class="slider"></span>
+                                                                            <span class="toggle-label">
+                                                                                <span class="icon">@(editingItem.IsItemReceived ? "✅" : "⏳")</span>
+                                                                                @(editingItem.IsItemReceived ? "Item Received" : "Item Pending")
+                                                                            </span>
+                                                                        </label>
+                                                                    </div>
+                                                                </div><div class="form-actions">
+                                                                    <button class="btn btn-save" @onclick="SaveEdit">
+                                                                        <span class="icon">💾</span> Save
+                                                                    </button>
+                                                                    <button class="btn btn-cancel" @onclick="CancelEdit">
+                                                                        <span class="icon">✖️</span> Cancel
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="item-card @(item.IsItemReceived ? "received" : "pending")">
+                                                        <div class="item-header">
+                                                            <div class="item-title">
+                                                                <h3>
+                                                                    <span class="icon">📦</span>
+                                                                    @item.ProductName
+                                                                </h3>
+                                                                <div class="item-status">
+                                                                    <span class="status-badge @(item.IsItemReceived ? "received" : "pending")">
+                                                                        <span class="icon">@(item.IsItemReceived ? "✅" : "⏳")</span>
+                                                                        @(item.IsItemReceived ? "Received" : "Pending")
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="price-info">
+                                                                @if (item.HasDiscount)
+                                                                {
+                                                                    <span class="original-price">
+                                                                        <span class="icon">💰</span>
+                                                                        @FormatCurrency(item.OriginalPrice)
+                                                                    </span>
+                                                                    <span class="discount">
+                                                                        <span class="icon">🏷️</span>
+                                                                        @(item.DiscountPercentage.HasValue
+                                                                            ? $"-{item.DiscountPercentage:F1}%"
+                                                                            : $"-{FormatCurrency(item.DiscountAmount)}")
+                                                                    </span>
+                                                                }
+                                                                <span class="final-price">
+                                                                    <span class="icon">💵</span>
+                                                                    @FormatCurrency(item.ItemPrice)
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="item-details">
+                                                            @if (!string.IsNullOrEmpty(item.ShopName))
+                                                            {
+                                                                <div class="detail-row">
+                                                                    <span class="label">
+                                                                        <span class="icon">🏪</span>
+                                                                        Shop:
+                                                                    </span>
+                                                                    <span class="value">@item.ShopName</span>
+                                                                </div>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(item.ContactPerson))
+                                                            {
+                                                                <div class="detail-row">
+                                                                    <span class="label">
+                                                                        <span class="icon">👤</span>
+                                                                        Contact:
+                                                                    </span>
+                                                                    <span class="value">@item.ContactPerson</span>
+                                                                </div>
+                                                            }
+                                                        </div>
+
+                                                        <div class="payment-status @GetPaymentStatusClass(item)">
+                                                            <div class="status-header">
+                                                                <span class="icon">💳</span>
+                                                                <span class="status-text">@item.PaymentProgress</span>
+                                                            </div>
+                                                            <div class="progress-bar">
+                                                                <div class="progress-fill" style="width: @(item.PaymentProgress?.TrimEnd('%'))%"></div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="delivery-status">
+                                                            <label class="toggle-switch">
+                                                                <input type="checkbox"
+                                                                       checked="@item.IsItemReceived"
+                                                                       @onchange="@(e => ToggleReceived(item))" />
+                                                                <span class="slider"></span>
+                                                                <span class="toggle-label">
+                                                                    <span class="icon">@(item.IsItemReceived ? "✅" : "⏳")</span>
+                                                                    @(item.IsItemReceived ? "Item Received" : "Item Pending")
+                                                                </span>
+                                                            </label>
+                                                        </div>
+
+                                                        <div class="item-actions">
+                                                            <button class="btn btn-edit" @onclick="() => StartEdit(item)">
+                                                                <span class="icon">✏️</span>
+                                                                Edit
+                                                            </button>
+                                                            <button class="btn btn-delete" @onclick="() => RemoveItem(item)">
+                                                                <span class="icon">🗑️</span>
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                }
                                             }
                                         </div>
                                     }
                                 </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-view">
+                            @foreach (var category in purchaseItems.Where(i => !i.IsDeleted)
+                           .Select(i => i.Category)
+                           .Distinct())
+                            {
+                                var categoryItems = purchaseItems.Where(i => i.Category == category && !i.IsDeleted);
+                                var (emoji, displayName) = EmojiIconService.GetIcon(category);
+                                var categoryColor = EmojiIconService.GetCategoryColor(category);
 
-                                <div class="delivery-status">
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" 
-                                               checked="@item.IsItemReceived" 
-                                               @onchange="@(e => ToggleReceived(item))" />
-                                        <span class="slider"></span>
-                                        <span class="toggle-label">
-                                            @(item.IsItemReceived ? "Received" : "Pending")
-                                        </span>
-                                    </label>
-                                </div>
+                                <div class="category-section @(IsCategoryExpanded(category) ? "expanded" : "")"
+                                     style="--category-color: @categoryColor">
+                                    <div class="category-header" @onclick="() => ToggleCategoryExpand(category)">
+                                        <div class="category-title">
+                                            <span class="category-emoji">@emoji</span>
+                                            <span class="category-name">@displayName</span>
+                                        </div>
+                                        <div class="category-stats">
+                                            <span class="item-count">
+                                                <span class="icon">📦</span>
+                                                @categoryItems.Count() items
+                                            </span>
+                                            <span class="total-amount">
+                                                <span class="icon">💰</span>
+                                                @FormatCurrency(GetCategoryTotal(category))
+                                            </span>
+                                            <span class="expand-icon">
+                                                @(IsCategoryExpanded(category) ? "🔽" : "▶️")
+                                            </span>
+                                        </div>
+                                    </div>
 
-                                <div class="item-actions">
-                                    <button class="action-button edit" @onclick="() => StartEdit(item)">
-                                        Edit
-                                    </button>
-                                    <button class="action-button delete" @onclick="() => RemoveItem(item)">
-                                        Delete
-                                    </button>
+                                    @if (IsCategoryExpanded(category))
+                                    {
+                                        <div class="items-table">
+                                            <table>
+                                                <thead>
+                                                    <tr>
+                                                        <th>
+                                                            <span class="icon">📦</span>
+                                                            Product
+                                                        </th>
+                                                        <th>
+                                                            <span class="icon">💰</span>
+                                                            Price
+                                                        </th>
+                                                        <th>
+                                                            <span class="icon">💳</span>
+                                                            Payment
+                                                        </th>
+                                                        <th>
+                                                            <span class="icon">📦</span>
+                                                            Status
+                                                        </th>
+                                                        <th>
+                                                            <span class="icon">⚙️</span>
+                                                            Actions
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var item in categoryItems)
+                                                    {
+                                                        <tr class="@(item.IsItemReceived ? "received" : "pending")">
+                                                            <td>
+                                                                <div class="product-info">
+                                                                    <span class="name">
+                                                                        <span class="icon">📦</span>
+                                                                        @item.ProductName
+                                                                    </span>
+                                                                    @if (!string.IsNullOrEmpty(item.ShopName))
+                                                                    {
+                                                                        <span class="shop">
+                                                                            <span class="icon">🏪</span>
+                                                                            @item.ShopName
+                                                                        </span>
+                                                                    }
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div class="price-info">
+                                                                    @if (item.HasDiscount)
+                                                                    {
+                                                                        <span class="original-price">
+                                                                            <span class="icon">💰</span>
+                                                                            @FormatCurrency(item.OriginalPrice)
+                                                                        </span>
+                                                                        <span class="discount">
+                                                                            <span class="icon">🏷️</span>
+                                                                            @(item.DiscountPercentage.HasValue
+                                                                                ? $"-{item.DiscountPercentage:F1}%"
+                                                                                : $"-{FormatCurrency(item.DiscountAmount)}")
+                                                                        </span>
+                                                                    }
+                                                                    <span class="final-price">
+                                                                        <span class="icon">💵</span>
+                                                                        @FormatCurrency(item.ItemPrice)
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div class="payment-status @GetPaymentStatusClass(item)">
+                                                                    <span class="icon">💳</span>
+                                                                    @item.PaymentProgress
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div class="delivery-toggle">
+                                                                    <label class="toggle-switch">
+                                                                        <input type="checkbox"
+                                                                               checked="@item.IsItemReceived"
+                                                                               @onchange="@(e => ToggleReceived(item))" />
+                                                                        <span class="slider"></span>
+                                                                        <span class="status-icon">
+                                                                            @(item.IsItemReceived ? "✅" : "⏳")
+                                                                        </span>
+                                                                    </label>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div class="item-actions">
+                                                                    <button class="btn btn-icon" @onclick="() => StartEdit(item)">
+                                                                        <span class="icon">✏️</span>
+                                                                    </button>
+                                                                    <button class="btn btn-icon" @onclick="() => RemoveItem(item)">
+                                                                        <span class="icon">🗑️</span>
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
                                 </div>
                             }
                         </div>
@@ -220,7 +583,8 @@
         </Authorized>
         <NotAuthorized>
             <div class="unauthorized">
-                <p>Please log in to access the purchase tracker.</p>
+                <span class="icon">🔒</span>
+                Please log in to access the purchase tracker.
             </div>
         </NotAuthorized>
     </AuthorizeView>
@@ -238,6 +602,10 @@
     private List<ExcelListItem> availableLists = new List<ExcelListItem>();
     private string selectedListKey = "";
     private string paymentType = "";
+    private bool isDarkMode = false;
+    private bool isGridView = true;
+    private bool isAddingItem = false;
+    private HashSet<string> expandedCategories = new HashSet<string>();
 
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; }
@@ -294,6 +662,25 @@
         }
     }
 
+    private void StartAddingItem()
+    {
+        isAddingItem = true;
+        newItem = new PurchaseTrackerItem
+            {
+                ExpectedDeliveryDate = DateTime.Today,
+                PaymentType = "Cash",
+                PaymentProgress = "0%"
+            };
+        editingItem = null;
+    }
+
+    private void CancelAddingItem()
+    {
+        isAddingItem = false;
+        newItem = new PurchaseTrackerItem();
+        paymentType = "";
+    }
+
     private async Task ToggleReceived(PurchaseTrackerItem item)
     {
         item.IsItemReceived = !item.IsItemReceived;
@@ -341,6 +728,7 @@
             paymentType = "";
             errorMessage = null;
             await toast.ShowToast("Item added successfully", "success");
+            isAddingItem = false;
         }
         catch (Exception ex)
         {
@@ -382,22 +770,25 @@
     private void StartEdit(PurchaseTrackerItem item)
     {
         editingItem = new PurchaseTrackerItem
-        {
-            ID = item.ID,
-            ProductName = item.ProductName,
-            Category = item.Category,
-            ShopName = item.ShopName,
-            ContactPerson = item.ContactPerson,
-            ContactNumber = item.ContactNumber,
-            InvoiceNumber = item.InvoiceNumber,
-            OriginalPrice = item.OriginalPrice,
-            DiscountAmount = item.DiscountAmount,
-            DiscountPercentage = item.DiscountPercentage,
-            ItemPrice = item.ItemPrice,
-            PaymentType = item.PaymentType,
-            PaymentProgress = item.PaymentProgress,
-            IsItemReceived = item.IsItemReceived
-        };
+            {
+                ID = item.ID,
+                ProductName = item.ProductName,
+                Category = item.Category,
+                ShopName = item.ShopName,
+                ContactPerson = item.ContactPerson,
+                ContactNumber = item.ContactNumber,
+                InvoiceNumber = item.InvoiceNumber,
+                OriginalPrice = item.OriginalPrice,
+                DiscountAmount = item.DiscountAmount,
+                DiscountPercentage = item.DiscountPercentage,
+                ItemPrice = item.ItemPrice,
+                PaymentType = item.PaymentType,
+                PaymentProgress = item.PaymentProgress,
+                IsItemReceived = item.IsItemReceived,
+                CreatedAt = item.CreatedAt,
+                UpdatedAt = DateTime.Now,
+                LastModifiedDate = DateTime.Now
+            };
     }
 
     private void CancelEdit()
@@ -438,6 +829,35 @@
         return purchaseItems.Where(i => !i.IsDeleted).Sum(i => i.ItemPrice ?? 0m);
     }
 
+    private decimal GetTotalPendingPayment()
+    {
+        return purchaseItems
+            .Where(i => !i.IsDeleted)
+            .Sum(i => (i.ItemPrice ?? 0m) - ((i.TotalPaid ?? 0m) + (i.DepositAmount ?? 0m)));
+    }
+
+    private decimal GetCategoryTotal(string category)
+    {
+        return purchaseItems
+            .Where(i => i.Category == category && !i.IsDeleted)
+            .Sum(i => i.ItemPrice ?? 0m);
+    }
+
+    private decimal GetCategoryPaymentProgress(string category)
+    {
+        var items = purchaseItems
+            .Where(i => i.Category == category && !i.IsDeleted && i.PaymentProgress != "Free")
+            .ToList();
+
+        if (!items.Any()) return 0;
+
+        var totalPrice = items.Sum(i => i.ItemPrice ?? 0m);
+        if (totalPrice == 0) return 0;
+
+        var totalPaid = items.Sum(i => (i.TotalPaid ?? 0m) + (i.DepositAmount ?? 0m));
+        return (totalPaid / totalPrice) * 100m;
+    }
+
     private decimal GetOverallPaymentProgress()
     {
         var items = purchaseItems.Where(i => !i.IsDeleted && i.PaymentProgress != "Free").ToList();
@@ -461,6 +881,23 @@
         };
     }
 
+    private void ToggleCategoryExpand(string category)
+    {
+        if (expandedCategories.Contains(category))
+        {
+            expandedCategories.Remove(category);
+        }
+        else
+        {
+            expandedCategories.Add(category);
+        }
+    }
+
+    private bool IsCategoryExpanded(string category)
+    {
+        return expandedCategories.Contains(category);
+    }
+
     private string FormatCurrency(decimal? value)
     {
         if (!value.HasValue) return "RM 0.00";
@@ -472,3 +909,5 @@
         return $"{value:F1}";
     }
 }
+
+

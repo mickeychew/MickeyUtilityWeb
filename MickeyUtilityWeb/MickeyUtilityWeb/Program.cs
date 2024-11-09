@@ -3,6 +3,7 @@ using MickeyUtilityWeb;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+using MickeyUtilityWeb.Services.SharedServices;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -39,6 +40,7 @@ builder.Services.AddScoped<ShoppingListService>();
 builder.Services.AddScoped<FileIdService>();
 builder.Services.AddScoped<ItineraryTestDataService>();
 builder.Services.AddScoped<IconService>();
+builder.Services.AddScoped<EmojiIconService>();
 builder.Services.AddScoped<PurchaseTrackerService>();
 builder.Services.AddApiAuthorization();
 

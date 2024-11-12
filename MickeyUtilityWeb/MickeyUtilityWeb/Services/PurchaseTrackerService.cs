@@ -239,7 +239,7 @@ namespace MickeyUtilityWeb.Services
 
         private string GenerateNewId(List<PurchaseTrackerItem> currentItems)
         {
-            string prefix = "PRCH";
+            string prefix = "PRMC";
             int maxId = currentItems
                 .Where(item => item.ID.StartsWith(prefix))
                 .Select(item => int.TryParse(item.ID.Substring(4), out int id) ? id : 0)

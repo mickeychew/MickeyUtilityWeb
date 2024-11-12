@@ -422,6 +422,16 @@
                                                                     <span class="value">@item.ShopName</span>
                                                                 </div>
                                                             }
+                                                            @if (!string.IsNullOrEmpty(item.InvoiceNumber))
+                                                            {
+                                                                <div class="detail-row">
+                                                                    <span class="label">
+                                                                        <span class="icon">📄</span>
+                                                                        Invoice:
+                                                                    </span>
+                                                                    <span class="value">@item.InvoiceNumber</span>
+                                                                </div>
+                                                            }
                                                             @if (!string.IsNullOrEmpty(item.ContactPerson))
                                                             {
                                                                 <div class="detail-row">
@@ -432,12 +442,56 @@
                                                                     <span class="value">@item.ContactPerson</span>
                                                                 </div>
                                                             }
+                                                            @if (!string.IsNullOrEmpty(item.ContactNumber))
+                                                            {
+                                                                <div class="detail-row">
+                                                                    <span class="label">
+                                                                        <span class="icon">📞</span>
+                                                                        Phone:
+                                                                    </span>
+                                                                    <span class="value">@item.ContactNumber</span>
+                                                                </div>
+                                                            }
                                                         </div>
 
                                                         <div class="payment-status @GetPaymentStatusClass(item)">
                                                             <div class="status-header">
                                                                 <span class="icon">💳</span>
                                                                 <span class="status-text">@item.PaymentProgress</span>
+                                                            </div>
+                                                            <div class="payment-details">
+                                                                <div class="payment-type">
+                                                                    <span class="icon">💳</span>
+                                                                    <span>@item.PaymentType</span>
+                                                                </div>
+                                                                @if (item.DepositAmount > 0)
+                                                                {
+                                                                    <div class="deposit-amount">
+                                                                        <span class="icon">💰</span>
+                                                                        <span>Deposit: @FormatCurrency(item.DepositAmount)</span>
+                                                                    </div>
+                                                                }
+                                                                @if (item.TotalPaid > 0)
+                                                                {
+                                                                    <div class="total-paid">
+                                                                        <span class="icon">💵</span>
+                                                                        <span>Paid: @FormatCurrency(item.TotalPaid)</span>
+                                                                    </div>
+                                                                }
+                                                                @if (item.RemainingAmount > 0)
+                                                                {
+                                                                    <div class="remaining-amount">
+                                                                        <span class="icon">⚠️</span>
+                                                                        <span>Remaining: @FormatCurrency(item.RemainingAmount)</span>
+                                                                    </div>
+                                                                }
+                                                                @if (item.SoldAmount > 0)
+                                                                {
+                                                                    <div class="sold-amount">
+                                                                        <span class="icon">🏷️</span>
+                                                                        <span>Sold: @FormatCurrency(item.SoldAmount)</span>
+                                                                    </div>
+                                                                }
                                                             </div>
                                                             <div class="progress-bar">
                                                                 <div class="progress-fill" style="width: @(item.PaymentProgress?.TrimEnd('%'))%"></div>

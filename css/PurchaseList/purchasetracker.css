@@ -8,6 +8,7 @@
     --border: #e2e8f0;
     --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     --radius: 12px;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .container {
@@ -16,6 +17,7 @@
     padding: 20px;
     background-color: var(--background);
     min-height: 100vh;
+    -webkit-overflow-scrolling: touch;
 }
 
 .header {
@@ -25,6 +27,8 @@
     color: white;
     margin-bottom: 24px;
     box-shadow: var(--shadow);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
 
 .header-top {
@@ -56,6 +60,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    -webkit-appearance: none;
 }
 
     .list-selector label {
@@ -70,6 +75,12 @@
         border-radius: 6px;
         min-width: 200px;
         font-size: 14px;
+        -webkit-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 32px;
     }
 
 .stats-widget {
@@ -116,11 +127,20 @@
     gap: 8px;
     color: white;
     transition: all 0.2s;
+    min-height: 44px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
     .btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn:active {
+        transform: translateY(0);
     }
 
     .btn .icon {
@@ -135,7 +155,6 @@
     background-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Category Section Styles */
 .category-section {
     background: white;
     border-radius: var(--radius);
@@ -143,6 +162,8 @@
     margin-bottom: 20px;
     border-left: 4px solid var(--category-color);
     overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+    -webkit-transform: translate3d(0,0,0);
 }
 
 .category-header {
@@ -152,6 +173,7 @@
     align-items: center;
     cursor: pointer;
     transition: background-color 0.2s;
+    min-height: 44px;
 }
 
     .category-header:hover {
@@ -187,15 +209,6 @@
     gap: 16px;
 }
 
-.item-count,
-.total-amount {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 14px;
-    color: var(--gray);
-}
-
 .expand-icon {
     font-size: 20px;
     transition: transform 0.3s;
@@ -205,7 +218,6 @@
     transform: rotate(180deg);
 }
 
-/* Grid View Styles */
 .items-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -221,6 +233,9 @@
     box-shadow: var(--shadow);
     transition: all 0.3s;
     border-left: 4px solid transparent;
+    animation: slideIn 0.3s ease-out;
+    -webkit-transform: translate3d(0,0,0);
+    touch-action: manipulation;
 }
 
     .item-card.received {
@@ -229,11 +244,6 @@
 
     .item-card.pending {
         border-left-color: var(--accent);
-    }
-
-    .item-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     }
 
 .item-header {
@@ -319,7 +329,6 @@
     font-weight: 500;
 }
 
-/* Payment Status Styles */
 .payment-status {
     padding: 12px;
     border-radius: 8px;
@@ -370,9 +379,9 @@
     height: 100%;
     background: currentColor;
     transition: width 0.3s ease;
+    animation: progressFill 0.6s ease-out;
 }
 
-/* Toggle Switch Styles */
 .delivery-status {
     margin-bottom: 16px;
 }
@@ -382,6 +391,8 @@
     align-items: center;
     gap: 8px;
     cursor: pointer;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
 }
 
     .toggle-switch input {
@@ -425,7 +436,6 @@ input:checked + .slider {
     color: var(--text);
 }
 
-/* List View Styles */
 .list-view table {
     width: 100%;
     border-collapse: separate;
@@ -448,38 +458,6 @@ input:checked + .slider {
     border-bottom: 1px solid var(--border);
 }
 
-.list-view tr:last-child td {
-    border-bottom: none;
-}
-
-.list-view th,
-.list-view td {
-    white-space: nowrap;
-}
-
-.list-view .product-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.list-view .name {
-    font-weight: 600;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.list-view .shop {
-    font-size: 12px;
-    color: var(--gray);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-/* Form Styles */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -491,6 +469,7 @@ input:checked + .slider {
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    -webkit-overflow-scrolling: touch;
 }
 
 .add-item-form,
@@ -501,6 +480,7 @@ input:checked + .slider {
     max-width: 800px;
     max-height: 90vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .form-header {
@@ -509,6 +489,10 @@ input:checked + .slider {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 1;
 }
 
     .form-header h2 {
@@ -525,6 +509,12 @@ input:checked + .slider {
     font-size: 24px;
     cursor: pointer;
     color: var(--gray);
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .form-content {
@@ -533,6 +523,9 @@ input:checked + .slider {
 
 .form-section {
     margin-bottom: 24px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 12px;
 }
 
 .section-header {
@@ -568,6 +561,7 @@ input:checked + .slider {
     transform: translateY(-50%);
     font-size: 16px;
     color: var(--gray);
+    pointer-events: none;
 }
 
 .form-input {
@@ -575,7 +569,10 @@ input:checked + .slider {
     padding: 12px 12px 12px 40px;
     border: 1px solid var(--border);
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 16px;
+    min-height: 44px;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
     .form-input:focus {
@@ -584,16 +581,87 @@ input:checked + .slider {
         box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
     }
 
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
+.dates-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
 }
 
-/* Dark Mode Styles */
+.date-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border-left: 4px solid #cbd5e0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.date-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    min-height: 44px;
+}
+
+.date-icon {
+    font-size: 1.25rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+}
+
+.date-info {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.primary-date {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.secondary-date {
+    font-size: 0.9rem;
+    color: var(--gray);
+}
+
+.date-status {
+    font-size: 0.8rem;
+    margin-top: 8px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    display: inline-block;
+}
+
+input[type="date"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 16px;
+    min-height: 44px;
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: white;
+    color: var(--text);
+    padding-right: 24px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+}
+
 .dark-mode {
     --background: #1a202c;
     --text: #f7fafc;
@@ -609,14 +677,35 @@ input:checked + .slider {
         background: #2d3748;
     }
 
-    .dark-mode .form-input {
-        background: #2d3748;
+    .dark-mode .form-input,
+    .dark-mode input[type="date"] {
+        background-color: #2d3748;
         border-color: #4a5568;
         color: white;
     }
 
-/* Mobile Responsiveness */
-@media screen and (max-width: 768px) {
+    .dark-mode .form-section {
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    .dark-mode .date-card {
+        background: rgba(44, 62, 80, 0.9);
+        border-color: #4a5568;
+    }
+
+    .dark-mode .date-status {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .dark-mode .primary-date {
+        color: white;
+    }
+
+    .dark-mode .date-icon {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+@media (max-width: 768px) {
     .header-top {
         flex-direction: column;
         gap: 16px;
@@ -631,27 +720,50 @@ input:checked + .slider {
         text-align: center;
     }
 
+    .total-cost,
+    .item-count,
+    .pending-payment {
+        justify-content: center;
+    }
+
     .action-buttons {
         flex-direction: column;
     }
 
     .btn {
         width: 100%;
+        justify-content: center;
     }
 
     .category-header {
         flex-direction: column;
         padding: 16px;
         gap: 12px;
+        text-align: center;
     }
 
     .category-stats {
         width: 100%;
-        justify-content: space-between;
+        justify-content: center;
+        flex-wrap: wrap;
     }
 
     .items-grid {
         grid-template-columns: 1fr;
+        padding: 12px;
+    }
+
+    .item-card {
+        padding: 16px;
+    }
+
+    .item-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .price-info {
+        justify-content: flex-start;
     }
 
     .input-group {
@@ -660,6 +772,8 @@ input:checked + .slider {
 
     .list-view {
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 0 12px;
     }
 
         .list-view table {
@@ -667,190 +781,99 @@ input:checked + .slider {
         }
 
     .modal-overlay {
-        padding: 16px;
+        padding: 12px;
     }
 
     .add-item-form,
     .edit-form {
-        max-height: 85vh;
+        margin: 0;
+        max-height: calc(100vh - 24px);
+        border-radius: 12px;
     }
 
-    .form-section {
+    .form-content {
         padding: 16px;
     }
-}
 
-/* Animation Styles */
-@keyframes slideIn {
-    from {
-        transform: translateY(20px);
-        opacity: 0;
+    .dates-container {
+        grid-template-columns: 1fr;
     }
 
-    to {
-        transform: translateY(0);
-        opacity: 1;
+    .date-card {
+        padding: 12px;
     }
-}
 
-.category-section {
-    animation: slideIn 0.3s ease-out;
-}
+    .date-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
 
-.item-card {
-    animation: slideIn 0.3s ease-out;
-}
-
-/* Loading Spinner */
-.loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid var(--border);
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    margin: 48px auto;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
+    .date-status {
+        width: 100%;
+        text-align: center;
     }
 }
 
-/* Error Message */
-.error-message {
-    background: #fff5f5;
-    border-left: 4px solid var(--accent);
-    padding: 16px;
-    border-radius: var(--radius);
-    margin: 20px 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.retry-button {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-}
-
-/* Toast Customization */
-.toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    padding: 16px;
-    border-radius: var(--radius);
-    background: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    z-index: 1000;
-    animation: slideInRight 0.3s ease-out;
-}
-
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
+@media (max-width: 480px) {
+    .container {
+        padding: 12px;
     }
 
-    to {
-        transform: translateX(0);
-        opacity: 1;
+    .header {
+        padding: 16px;
+    }
+
+    .title {
+        font-size: 24px;
+    }
+
+    .list-selector select {
+        min-width: 160px;
+    }
+
+    .item-card {
+        margin-bottom: 12px;
     }
 }
 
-.toast.success {
-    border-left: 4px solid var(--secondary);
-}
-
-.toast.error {
-    border-left: 4px solid var(--accent);
-}
-
-.toast.info {
-    border-left: 4px solid var(--primary);
-}
-
-/* Status Badge Styles */
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    gap: 4px;
-}
-
-    .status-badge.received {
-        background: #f0fff4;
-        color: var(--secondary);
+@media (hover: none) {
+    .btn:hover {
+        transform: none;
+        box-shadow: none;
     }
 
-    .status-badge.pending {
-        background: #fff5f5;
-        color: var(--accent);
-    }
-
-/* Icon Global Styles */
-.icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.5em;
-    height: 1.5em;
-}
-
-/* Unauthorized State */
-.unauthorized {
-    text-align: center;
-    padding: 48px 24px;
-    background: white;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-}
-
-    .unauthorized .icon {
-        font-size: 48px;
-    }
-
-/* Progress Bar Animation */
-.progress-fill {
-    animation: progressFill 0.6s ease-out;
-}
-
-@keyframes progressFill {
-    from {
-        width: 0;
+    .item-card:hover {
+        transform: none;
     }
 }
 
-/* Hover Effects */
-.item-card .item-actions {
-    opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.3s ease;
+@supports (-webkit-touch-callout: none) {
+    .modal-overlay,
+    .add-item-form,
+    .edit-form,
+    .list-view,
+    .date-card {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .form-input,
+    input[type="date"],
+    select {
+        font-size: 16px;
+    }
+
+    .btn,
+    .toggle-switch,
+    .category-header,
+    .form-input,
+    input[type="date"],
+    .date-card-header {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
 }
 
-.item-card:hover .item-actions {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* Print Styles */
 @media print {
     .container {
         max-width: none;
@@ -869,376 +892,7 @@ input:checked + .slider {
         box-shadow: none;
         border: 1px solid #ddd;
     }
-}
 
-/* Accessibility */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-.btn:focus,
-.form-input:focus {
-    outline: 3px solid var(--primary);
-    outline-offset: 2px;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--background);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--gray);
-    border-radius: 4px;
-}
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--primary);
-    }
-
-
-/* Dates Container and Cards Styles */
-.dates-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 16px;
-    margin-top: 16px;
-}
-
-
-
-.date-card {
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 12px;
-    padding: 16px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    border-left: 4px solid #cbd5e0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.dark-mode .date-card {
-    background: rgba(44, 62, 80, 0.9);
-    border-color: #4a5568;
-}
-
-.dark-mode .date-status {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.dark-mode input[type="date"] {
-    background-color: rgba(44, 62, 80, 0.9);
-    color: white;
-    border-color: #4a5568;
-}
-
-.dark-mode .date-card-header {
-    border-color: #4a5568;
-}
-
-/* Add missing mobile styles */
-@media screen and (max-width: 768px) {
-    .dates-container {
-        grid-template-columns: 1fr;
-        padding: 12px;
-    }
-
-    .date-card {
-        padding: 12px;
-    }
-
-    .date-info {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-    }
-
-    .date-status {
-        width: 100%;
-        text-align: center;
-    }
-
-    /* Modal form adjustments for mobile */
-    .modal-overlay {
-        padding: 8px;
-    }
-
-    .add-item-form,
-    .edit-form {
-        margin: 0;
-        border-radius: 8px;
-        max-height: calc(100vh - 32px);
-    }
-}
-
-/* Date Card Status Colors */
-.date-card.upcoming {
-    border-left-color: var(--primary);
-}
-
-.date-card.near {
-    border-left-color: #f39c12;
-}
-
-.date-card.today {
-    border-left-color: var(--accent);
-}
-
-.date-card.passed {
-    border-left-color: var(--gray);
-}
-
-.date-card.expired {
-    border-left-color: var(--accent);
-}
-
-.date-card-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
-}
-
-.date-icon {
-    font-size: 1.25rem;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 8px;
-}
-
-.dark-mode .date-icon {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.date-info {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-}
-
-.primary-date {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text);
-}
-
-.dark-mode .primary-date {
-    color: white;
-}
-
-.secondary-date {
-    font-size: 0.9rem;
-    color: var(--gray);
-}
-
-.date-status {
-    font-size: 0.8rem;
-    margin-top: 8px;
-    padding: 4px 8px;
-    border-radius: 12px;
-    background: rgba(0, 0, 0, 0.05);
-    display: inline-block;
-}
-
-
-.date-card.upcoming .date-status {
-    color: var(--primary);
-    background: rgba(52, 152, 219, 0.1);
-}
-
-.date-card.near .date-status {
-    color: #f39c12;
-    background: rgba(243, 156, 18, 0.1);
-}
-
-.date-card.today .date-status {
-    color: var(--accent);
-    background: rgba(231, 76, 60, 0.1);
-}
-
-.date-card.passed .date-status,
-.date-card.expired .date-status {
-    color: var(--gray);
-    background: rgba(149, 165, 166, 0.1);
-}
-
-.no-date {
-    font-size: 0.9rem;
-    color: var(--gray);
-    font-style: italic;
-}
-
-/* Form Input Date Styles */
-input[type="date"] {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 14px;
-    background: white;
-    color: var(--text);
-}
-
-
-input[type="date"]:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
-
-/* Responsive Grid for Items */
-.items-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    padding: 20px;
-}
-
-@media (max-width: 1024px) {
-    .items-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .items-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Item Card Responsive Adjustments */
-.item-card {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-@media (max-width: 480px) {
-    .item-card {
-        padding: 16px;
-    }
-
-    .item-header {
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .price-info {
-        justify-content: flex-start;
-    }
-}
-
-/* Category Header Responsive */
-.category-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-}
-
-@media (max-width: 640px) {
-    .category-header {
-        flex-direction: column;
-        gap: 12px;
-        text-align: center;
-    }
-
-    .category-stats {
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .category-title {
-        justify-content: center;
-    }
-}
-
-/* iOS Specific Styles */
-@supports (-webkit-touch-callout: none) {
-    /* Date Input iOS Fix */
-    input[type="date"] {
-        -webkit-appearance: none;
-        appearance: none;
-        min-height: 44px; /* iOS minimum touch target */
-    }
-    /* iOS Touch Target Size Fix */
-    .btn,
-    .toggle-switch,
-    .date-card-header {
-        min-height: 44px;
-    }
-    /* iOS Scrolling Fix */
-    .modal-overlay {
-        -webkit-overflow-scrolling: touch;
-    }
-}
-
-/* Dark Mode Enhancements */
-.dark-mode {
-    .date-card
-
-{
-    background: rgba(44, 62, 80, 0.9);
-    border-color: #4a5568;
-}
-
-.date-status {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-input[type="date"] {
-    background-color: rgba(44, 62, 80, 0.9);
-    color: white;
-    border-color: #4a5568;
-}
-
-.date-card-header {
-    border-color: #4a5568;
-}
-
-}
-
-/* Improved Form Layout */
-.form-section {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 24px;
-}
-
-.dark-mode .form-section {
-    background: rgba(0, 0, 0, 0.2);
-}
-
-/* Safari Date Input Fix */
-@media not all and (min-resolution:.001dpcm) {
-    @supports (-webkit-appearance:none) {
-        input[type="date"] {
-            padding-right: 24px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 8px center;
-            background-size: 16px;
-        }
-    }
-}
-
-/* Print Optimization */
-@media print {
     .date-card {
         break-inside: avoid;
         border: 1px solid #ddd;

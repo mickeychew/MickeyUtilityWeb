@@ -5,6 +5,7 @@
 @using MickeyUtilityWeb.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using System.Globalization
 @inject PurchaseTrackerService PurchaseTrackerService
 @inject NavigationManager NavigationManager
 @inject IAccessTokenProvider TokenProvider
@@ -324,6 +325,43 @@
                                                                             </span>
                                                                         </label>
                                                                     </div>
+                                                                    <div class="form-section">
+                                                                        <div class="section-header">
+                                                                            <span class="icon">📅</span>
+                                                                            <label>Important Dates</label>
+                                                                        </div>
+                                                                        <div class="dates-container">
+                                                                            <div class="date-card">
+                                                                                <div class="date-card-header">
+                                                                                    <span class="date-icon">💳</span>
+                                                                                    <label>Purchase Date</label>
+                                                                                </div>
+                                                                                <input type="date"
+                                                                                       @bind="editingItem.DepositPaymentDate"
+                                                                                       class="form-input" />
+                                                                            </div>
+
+                                                                            <div class="date-card">
+                                                                                <div class="date-card-header">
+                                                                                    <span class="date-icon">🛡️</span>
+                                                                                    <label>Warranty Date</label>
+                                                                                </div>
+                                                                                <input type="date"
+                                                                                       @bind="editingItem.WarrantyDate"
+                                                                                       class="form-input" />
+                                                                            </div>
+
+                                                                            <div class="date-card">
+                                                                                <div class="date-card-header">
+                                                                                    <span class="date-icon">🚚</span>
+                                                                                    <label>Expected Delivery</label>
+                                                                                </div>
+                                                                                <input type="date"
+                                                                                       @bind="editingItem.ExpectedDeliveryDate"
+                                                                                       class="form-input" />
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
                                                                 </div><div class="form-actions">
                                                                     <button class="btn btn-save" @onclick="SaveEdit">
                                                                         <span class="icon">💾</span> Save
@@ -418,7 +456,101 @@
                                                                 </span>
                                                             </label>
                                                         </div>
+                                                        <div class="dates-section">
+                                                            <div class="info-section delivery-section">
+                                                                <div class="info-icon">📅</div>
+                                                                <div class="info-content">
+                                                                    <div class="info-label">Delivery & Warranty</div>
+                                                                    <div class="dates-container">
+                                                                        <!-- Delivery Date Card -->
+                                                                        <div class="date-card @GetDeliveryDateStatus(item.ExpectedDeliveryDate)">
+                                                                            <div class="date-card-header">
+                                                                                <span class="date-icon">🚚</span>
+                                                                                <span class="date-label">Expected Delivery</span>
+                                                                            </div>
+                                                                            @if (item.ExpectedDeliveryDate.HasValue)
+                                                                            {
+                                                                                <div class="date-info">
+                                                                                    <div class="primary-date">@item.ExpectedDeliveryDate.Value.ToString("MMM d", CultureInfo.InvariantCulture)</div>
+                                                                                    <div class="secondary-date">@item.ExpectedDeliveryDate.Value.ToString("yyyy", CultureInfo.InvariantCulture)</div>
+                                                                                </div>
+                                                                                <div class="date-status">
+                                                                                    @{
+                                                                                        var deliveryDays = GetDaysUntil(item.ExpectedDeliveryDate);
+                                                                                        @GetDateStatusText(deliveryDays, "delivery")
+                                                                                    }
+                                                                                </div>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <div class="no-date">Not Set</div>
+                                                                            }
+                                                                        </div>
 
+                                                                        <!-- Purchase Date Card -->
+                                                                        <div class="date-card">
+                                                                            <div class="date-card-header">
+                                                                                <span class="date-icon">💳</span>
+                                                                                <span class="date-label">Purchase Date</span>
+                                                                            </div>
+                                                                            @if (item.DepositPaymentDate.HasValue)
+                                                                            {
+                                                                                <div class="date-info">
+                                                                                    <div class="primary-date">@item.DepositPaymentDate.Value.ToString("MMM d", CultureInfo.InvariantCulture)</div>
+                                                                                    <div class="secondary-date">@item.DepositPaymentDate.Value.ToString("yyyy", CultureInfo.InvariantCulture)</div>
+                                                                                </div>
+                                                                                <div class="date-status">
+                                                                                    @{
+                                                                                        var depositDays = (DateTime.Today - item.DepositPaymentDate.Value).Days;
+                                                                                        if (depositDays == 0)
+                                                                                        {
+                                                                                            <span>Today</span>
+                                                                                        }
+                                                                                        else if (depositDays > 0)
+                                                                                        {
+                                                                                            <span>@depositDays @(depositDays == 1 ? "day" : "days") ago</span>
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            <span>In @Math.Abs(depositDays) @(Math.Abs(depositDays) == 1 ? "day" : "days")</span>
+                                                                                        }
+                                                                                    }
+                                                                                </div>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <div class="no-date">Not Set</div>
+                                                                            }
+                                                                        </div>
+
+                                                                        <!-- Warranty Date Card -->
+                                                                        <div class="date-card @GetWarrantyDateStatus(item.WarrantyDate)">
+                                                                            <div class="date-card-header">
+                                                                                <span class="date-icon">🛡️</span>
+                                                                                <span class="date-label">Warranty Until</span>
+                                                                            </div>
+                                                                            @if (item.WarrantyDate.HasValue)
+                                                                            {
+                                                                                <div class="date-info">
+                                                                                    <div class="primary-date">@item.WarrantyDate.Value.ToString("MMM d", CultureInfo.InvariantCulture)</div>
+                                                                                    <div class="secondary-date">@item.WarrantyDate.Value.ToString("yyyy", CultureInfo.InvariantCulture)</div>
+                                                                                </div>
+                                                                                <div class="date-status">
+                                                                                    @{
+                                                                                        var warrantyDays = GetDaysUntil(item.WarrantyDate);
+                                                                                        @GetDateStatusText(warrantyDays, "warranty")
+                                                                                    }
+                                                                                </div>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <div class="no-date">Not Set</div>
+                                                                            }
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                         <div class="item-actions">
                                                             <button class="btn btn-edit" @onclick="() => StartEdit(item)">
                                                                 <span class="icon">✏️</span>
@@ -741,6 +873,18 @@
     {
         try
         {
+            // Ensure all dates are properly formatted before sending to OneDrive
+            foreach (var item in purchaseItems)
+            {
+                // Remove time component from dates to ensure consistent date handling
+                if (item.DepositPaymentDate.HasValue)
+                    item.DepositPaymentDate = item.DepositPaymentDate.Value.Date;
+                if (item.WarrantyDate.HasValue)
+                    item.WarrantyDate = item.WarrantyDate.Value.Date;
+                if (item.ExpectedDeliveryDate.HasValue)
+                    item.ExpectedDeliveryDate = item.ExpectedDeliveryDate.Value.Date;
+            }
+
             purchaseItems = await PurchaseTrackerService.UpdatePurchaseListInOneDrive(selectedListKey, purchaseItems);
             errorMessage = null;
             await toast.ShowToast("List updated successfully", "success");
@@ -785,10 +929,24 @@
                 PaymentType = item.PaymentType,
                 PaymentProgress = item.PaymentProgress,
                 IsItemReceived = item.IsItemReceived,
+                // Add these missing date properties
+                DepositPaymentDate = item.DepositPaymentDate,
+                WarrantyDate = item.WarrantyDate,
+                ExpectedDeliveryDate = item.ExpectedDeliveryDate,
+                // Keep track of creation and modification dates
                 CreatedAt = item.CreatedAt,
                 UpdatedAt = DateTime.Now,
-                LastModifiedDate = DateTime.Now
+                LastModifiedDate = DateTime.Now,
+                DeletedDate = item.DeletedDate,
+                IsDeleted = item.IsDeleted
             };
+        if (item.PaymentProgress == "Free")
+            paymentType = "free";
+        else if (item.PaymentProgress == "100%")
+            paymentType = "full";
+        else if (item.PaymentProgress != "0%")
+            paymentType = "partial";
+
     }
 
     private void CancelEdit()
@@ -801,6 +959,7 @@
         var item = purchaseItems.FirstOrDefault(i => i.ID == editingItem.ID);
         if (item != null)
         {
+            // Update basic properties
             item.ProductName = editingItem.ProductName;
             item.Category = editingItem.Category;
             item.ShopName = editingItem.ShopName;
@@ -814,8 +973,16 @@
             item.PaymentType = editingItem.PaymentType;
             item.PaymentProgress = editingItem.PaymentProgress;
             item.IsItemReceived = editingItem.IsItemReceived;
+
+            // Update date properties
+            item.DepositPaymentDate = editingItem.DepositPaymentDate;
+            item.WarrantyDate = editingItem.WarrantyDate;
+            item.ExpectedDeliveryDate = editingItem.ExpectedDeliveryDate;
+
+            // Update metadata
             item.UpdatedAt = DateTime.Now;
             item.LastModifiedDate = DateTime.Now;
+
             item.CalculateValues();
         }
 
@@ -907,6 +1074,48 @@
     private string FormatPercentage(decimal value)
     {
         return $"{value:F1}";
+    }
+    private string GetDeliveryDateStatus(DateTime? date)
+    {
+        if (!date.HasValue) return "";
+
+        var daysUntil = GetDaysUntil(date);
+
+        if (daysUntil == 0) return "today";
+        if (daysUntil < 0) return "passed";
+        if (daysUntil <= 7) return "near";
+        return "upcoming";
+    }
+
+    private string GetWarrantyDateStatus(DateTime? date)
+    {
+        if (!date.HasValue) return "";
+
+        var daysUntil = GetDaysUntil(date);
+
+        if (daysUntil == 0) return "today";
+        if (daysUntil < 0) return "expired";
+        if (daysUntil <= 30) return "near";
+        return "upcoming";
+    }
+
+    private int GetDaysUntil(DateTime? date)
+    {
+        if (!date.HasValue) return 0;
+        return (date.Value.Date - DateTime.Today).Days;
+    }
+
+    private string GetDateStatusText(int days, string type)
+    {
+        if (days == 0) return "Today";
+        if (days < 0)
+        {
+            var pastDays = Math.Abs(days);
+            return type == "warranty" ?
+                $"Expired {pastDays} {(pastDays == 1 ? "day" : "days")} ago" :
+                $"Due {pastDays} {(pastDays == 1 ? "day" : "days")} ago";
+        }
+        return $"In {days} {(days == 1 ? "day" : "days")}";
     }
 }
 

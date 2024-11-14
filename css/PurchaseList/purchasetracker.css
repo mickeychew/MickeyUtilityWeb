@@ -451,13 +451,115 @@ input:checked + .slider {
     text-align: left;
     font-weight: 600;
     color: var(--text);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    white-space: nowrap;
 }
 
 .list-view td {
     padding: 16px;
     border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+.list-view tr:last-child td {
+    border-bottom: none;
+}
+.list-view .product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
+.list-view .name {
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.list-view .shop {
+    font-size: 12px;
+    color: var(--gray);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.list-view .price-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.list-view .original-price {
+    text-decoration: line-through;
+    color: var(--gray);
+    font-size: 14px;
+}
+
+.list-view .final-price {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.list-view .payment-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.list-view .status-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.list-view .payment-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.list-view .delivery-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.list-view .status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.list-view .btn-group {
+    display: flex;
+    gap: 8px;
+}
+.list-view .btn-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: none;
+    background: var(--background);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+}
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -771,13 +873,19 @@ input[type="date"] {
     }
 
     .list-view {
+        width: 100%;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        padding: 0 12px;
+        padding: 16px;
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
     }
 
         .list-view table {
-            min-width: 800px;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
         }
 
     .modal-overlay {
@@ -902,4 +1010,70 @@ input[type="date"] {
     .date-status {
         border: 1px solid #ddd;
     }
+}
+@media screen and (max-width: 1024px) {
+    .list-view {
+        padding: 12px;
+    }
+
+        .list-view td {
+            padding: 12px;
+        }
+}
+@media screen and (max-width: 768px) {
+    .list-view {
+        margin: 0 -16px;
+        border-radius: 0;
+    }
+
+        .list-view table {
+            min-width: 800px;
+        }
+
+        .list-view th,
+        .list-view td {
+            padding: 12px 8px;
+        }
+
+        .list-view .btn-icon {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+        }
+}
+
+/* iOS Specific Fixes */
+@supports (-webkit-touch-callout: none) {
+    .list-view {
+        -webkit-overflow-scrolling: touch;
+    }
+
+        .list-view .btn-icon {
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 44px;
+        }
+
+        .list-view input[type="checkbox"] {
+            width: 44px;
+            height: 44px;
+        }
+}
+
+/* Table Scroll Shadow */
+.list-view::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 30px;
+    pointer-events: none;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.list-view:hover::after {
+    opacity: 1;
 }

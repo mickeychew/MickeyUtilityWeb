@@ -659,105 +659,107 @@
 
                                     @if (IsCategoryExpanded(category))
                                     {
-                                        <div class="items-table">
-                                            <table>
-                                                <thead>
-                                                    <tr>
-                                                        <th>
-                                                            <span class="icon">📦</span>
-                                                            Product
-                                                        </th>
-                                                        <th>
-                                                            <span class="icon">💰</span>
-                                                            Price
-                                                        </th>
-                                                        <th>
-                                                            <span class="icon">💳</span>
-                                                            Payment
-                                                        </th>
-                                                        <th>
-                                                            <span class="icon">📦</span>
-                                                            Status
-                                                        </th>
-                                                        <th>
-                                                            <span class="icon">⚙️</span>
-                                                            Actions
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach (var item in categoryItems)
-                                                    {
-                                                        <tr class="@(item.IsItemReceived ? "received" : "pending")">
-                                                            <td>
-                                                                <div class="product-info">
-                                                                    <span class="name">
-                                                                        <span class="icon">📦</span>
-                                                                        @item.ProductName
-                                                                    </span>
-                                                                    @if (!string.IsNullOrEmpty(item.ShopName))
-                                                                    {
-                                                                        <span class="shop">
-                                                                            <span class="icon">🏪</span>
-                                                                            @item.ShopName
-                                                                        </span>
-                                                                    }
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <div class="price-info">
-                                                                    @if (item.HasDiscount)
-                                                                    {
-                                                                        <span class="original-price">
-                                                                            <span class="icon">💰</span>
-                                                                            @FormatCurrency(item.OriginalPrice)
-                                                                        </span>
-                                                                        <span class="discount">
-                                                                            <span class="icon">🏷️</span>
-                                                                            @(item.DiscountPercentage.HasValue
-                                                                                ? $"-{item.DiscountPercentage:F1}%"
-                                                                                : $"-{FormatCurrency(item.DiscountAmount)}")
-                                                                        </span>
-                                                                    }
-                                                                    <span class="final-price">
-                                                                        <span class="icon">💵</span>
-                                                                        @FormatCurrency(item.ItemPrice)
-                                                                    </span>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <div class="payment-status @GetPaymentStatusClass(item)">
-                                                                    <span class="icon">💳</span>
-                                                                    @item.PaymentProgress
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <div class="delivery-toggle">
-                                                                    <label class="toggle-switch">
-                                                                        <input type="checkbox"
-                                                                               checked="@item.IsItemReceived"
-                                                                               @onchange="@(e => ToggleReceived(item))" />
-                                                                        <span class="slider"></span>
-                                                                        <span class="status-icon">
-                                                                            @(item.IsItemReceived ? "✅" : "⏳")
-                                                                        </span>
-                                                                    </label>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <div class="item-actions">
-                                                                    <button class="btn btn-icon" @onclick="() => StartEdit(item)">
-                                                                        <span class="icon">✏️</span>
-                                                                    </button>
-                                                                    <button class="btn btn-icon" @onclick="() => RemoveItem(item)">
-                                                                        <span class="icon">🗑️</span>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
+                                        <div class="items-table-wrapper">
+                                            <div class="items-table">
+                                                <table>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>
+                                                                <span class="icon">📦</span>
+                                                                Product
+                                                            </th>
+                                                            <th>
+                                                                <span class="icon">💰</span>
+                                                                Price
+                                                            </th>
+                                                            <th>
+                                                                <span class="icon">💳</span>
+                                                                Payment
+                                                            </th>
+                                                            <th>
+                                                                <span class="icon">📦</span>
+                                                                Status
+                                                            </th>
+                                                            <th>
+                                                                <span class="icon">⚙️</span>
+                                                                Actions
+                                                            </th>
                                                         </tr>
-                                                    }
-                                                </tbody>
-                                            </table>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var item in categoryItems)
+                                                        {
+                                                            <tr class="@(item.IsItemReceived ? "received" : "pending")">
+                                                                <td>
+                                                                    <div class="product-info">
+                                                                        <span class="name">
+                                                                            <span class="icon">📦</span>
+                                                                            @item.ProductName
+                                                                        </span>
+                                                                        @if (!string.IsNullOrEmpty(item.ShopName))
+                                                                        {
+                                                                            <span class="shop">
+                                                                                <span class="icon">🏪</span>
+                                                                                @item.ShopName
+                                                                            </span>
+                                                                        }
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="price-info">
+                                                                        @if (item.HasDiscount)
+                                                                        {
+                                                                            <span class="original-price">
+                                                                                <span class="icon">💰</span>
+                                                                                @FormatCurrency(item.OriginalPrice)
+                                                                            </span>
+                                                                            <span class="discount">
+                                                                                <span class="icon">🏷️</span>
+                                                                                @(item.DiscountPercentage.HasValue
+                                                                                    ? $"-{item.DiscountPercentage:F1}%"
+                                                                                    : $"-{FormatCurrency(item.DiscountAmount)}")
+                                                                            </span>
+                                                                        }
+                                                                        <span class="final-price">
+                                                                            <span class="icon">💵</span>
+                                                                            @FormatCurrency(item.ItemPrice)
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="payment-status @GetPaymentStatusClass(item)">
+                                                                        <span class="icon">💳</span>
+                                                                        @item.PaymentProgress
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="delivery-toggle">
+                                                                        <label class="toggle-switch">
+                                                                            <input type="checkbox"
+                                                                                   checked="@item.IsItemReceived"
+                                                                                   @onchange="@(e => ToggleReceived(item))" />
+                                                                            <span class="slider"></span>
+                                                                            <span class="status-icon">
+                                                                                @(item.IsItemReceived ? "✅" : "⏳")
+                                                                            </span>
+                                                                        </label>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="item-actions">
+                                                                        <button class="btn btn-icon" @onclick="() => StartEdit(item)">
+                                                                            <span class="icon">✏️</span>
+                                                                        </button>
+                                                                        <button class="btn btn-icon" @onclick="() => RemoveItem(item)">
+                                                                            <span class="icon">🗑️</span>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     }
                                 </div>

@@ -1093,3 +1093,39 @@ input[type="date"] {
         background-color: rgba(0, 0, 0, 0.05);
     }
 }
+.items-table-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.items-table {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+    .items-table table {
+        min-width: 800px;
+        width: 100%;
+    }
+
+@media screen and (max-width: 768px) {
+    .items-table-wrapper {
+        margin: 0 -16px;
+        padding: 0 16px;
+    }
+
+    .items-table {
+        margin: 0 -16px;
+        padding: 0 16px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+        .items-table::-webkit-scrollbar {
+            display: none;
+        }
+}

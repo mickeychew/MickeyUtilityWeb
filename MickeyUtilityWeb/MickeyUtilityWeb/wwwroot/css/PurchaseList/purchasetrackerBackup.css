@@ -11,7 +11,6 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Container */
 .container {
     max-width: 1400px;
     margin: 0 auto;
@@ -21,7 +20,6 @@
     -webkit-overflow-scrolling: touch;
 }
 
-/* Header */
 .header {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     padding: 24px;
@@ -55,7 +53,6 @@
     gap: 8px;
 }
 
-/* List Selector */
 .list-selector {
     background: rgba(255, 255, 255, 0.1);
     padding: 12px;
@@ -86,7 +83,6 @@
         padding-right: 32px;
     }
 
-/* Stats Widget */
 .stats-widget {
     background: rgba(255, 255, 255, 0.1);
     padding: 16px 24px;
@@ -114,7 +110,6 @@
     gap: 8px;
 }
 
-/* Action Buttons */
 .action-buttons {
     display: flex;
     gap: 12px;
@@ -160,7 +155,6 @@
     background-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Category Section */
 .category-section {
     background: white;
     border-radius: var(--radius);
@@ -224,7 +218,6 @@
     transform: rotate(180deg);
 }
 
-/* Grid View */
 .items-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -233,135 +226,6 @@
     background: var(--background);
 }
 
-/* List View */
-.list-view table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    background: white;
-    border-radius: var(--radius);
-    overflow: hidden;
-}
-
-.list-view th {
-    background: var(--background);
-    padding: 16px;
-    text-align: left;
-    font-weight: 600;
-    color: var(--text);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    white-space: nowrap;
-}
-
-.list-view td,
-.list-view th {
-    padding: 16px;
-    vertical-align: middle;
-}
-
-.list-view tr:last-child td {
-    border-bottom: none;
-}
-
-.list-view .product-info {
-    min-width: 300px;
-    padding-right: 16px;
-}
-
-.list-view .name {
-    font-weight: 600;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.list-view .shop {
-    font-size: 12px;
-    color: var(--gray);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.list-view .price-info {
-    min-width: 180px;
-    white-space: nowrap;
-}
-
-.list-view .original-price {
-    text-decoration: line-through;
-    color: var(--gray);
-    font-size: 14px;
-}
-
-.list-view .final-price {
-    font-weight: 700;
-    color: var(--primary);
-}
-/* List View Components */
-.list-view .payment-info {
-    min-width: 140px;
-}
-
-.list-view .status-progress {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.list-view .payment-status {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.list-view .delivery-status {
-    min-width: 120px;
-}
-
-.list-view .item-actions {
-    min-width: 100px;
-}
-
-.list-view .status-badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.list-view .btn-group {
-    display: flex;
-    gap: 8px;
-}
-
-.list-view .btn-icon {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    border: none;
-    background: var(--background);
-    color: var(--text);
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-/* Item Card */
 .item-card {
     background: white;
     border-radius: 12px;
@@ -404,7 +268,6 @@
         gap: 8px;
     }
 
-/* Price Info */
 .price-info {
     display: flex;
     align-items: center;
@@ -441,7 +304,6 @@
     gap: 4px;
 }
 
-/* Item Details */
 .item-details {
     margin-bottom: 16px;
 }
@@ -467,7 +329,6 @@
     font-weight: 500;
 }
 
-/* Payment Status */
 .payment-status {
     padding: 12px;
     border-radius: 8px;
@@ -507,7 +368,6 @@
     color: #ed8936;
 }
 
-/* Progress Bar */
 .progress-bar {
     height: 6px;
     background: rgba(0, 0, 0, 0.1);
@@ -522,7 +382,10 @@
     animation: progressFill 0.6s ease-out;
 }
 
-/* Toggle Switch */
+.delivery-status {
+    margin-bottom: 16px;
+}
+
 .toggle-switch {
     display: flex;
     align-items: center;
@@ -561,7 +424,6 @@ input:checked + .slider {
     background-color: var(--secondary);
 }
 
-    /* Toggle Switch (continued) */
     input:checked + .slider:before {
         transform: translateX(24px);
     }
@@ -574,7 +436,136 @@ input:checked + .slider {
     color: var(--text);
 }
 
-/* Modal and Forms */
+.list-view table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.list-view th {
+    background: var(--background);
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    white-space: nowrap;
+}
+
+.list-view td,
+.list-view th {
+    padding: 16px;
+    vertical-align: middle;
+}
+
+.list-view tr:last-child td {
+    border-bottom: none;
+}
+
+.list-view .product-info {
+    min-width: 300px; /* More space for product name and shop */
+    padding-right: 16px;
+}
+
+
+.list-view .name {
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.list-view .shop {
+    font-size: 12px;
+    color: var(--gray);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.list-view .price-info {
+    min-width: 180px; /* More space for prices and discounts */
+    white-space: nowrap;
+}
+
+
+.list-view .original-price {
+    text-decoration: line-through;
+    color: var(--gray);
+    font-size: 14px;
+}
+
+.list-view .final-price {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.list-view .payment-info {
+    min-width: 140px;
+}
+
+.list-view .status-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.list-view .payment-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.list-view .delivery-status {
+    min-width: 120px;
+}
+
+.list-view .item-actions {
+    min-width: 100px;
+}
+
+
+.list-view .status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.list-view .btn-group {
+    display: flex;
+    gap: 8px;
+}
+
+.list-view .btn-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: none;
+    background: var(--background);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -698,7 +689,6 @@ input:checked + .slider {
         box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
     }
 
-/* Dates Container */
 .dates-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -762,7 +752,6 @@ input:checked + .slider {
     display: inline-block;
 }
 
-/* Date Input */
 input[type="date"] {
     width: 100%;
     padding: 12px;
@@ -781,50 +770,6 @@ input[type="date"] {
     background-size: 16px;
 }
 
-/* Table Wrapper */
-.items-table-wrapper {
-    position: relative;
-    width: calc(100% + 32px);
-    margin: 0 -16px;
-    padding: 0 16px;
-}
-
-.items-table {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-    .items-table::-webkit-scrollbar {
-        display: none;
-    }
-
-    .items-table table {
-        min-width: 1000px;
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .items-table:after {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 24px;
-        background: linear-gradient(to left, rgba(255, 255, 255, 0.9), transparent);
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.2s;
-    }
-
-    .items-table.scrollable:after {
-        opacity: 1;
-    }
-/* Dark Mode */
 .dark-mode {
     --background: #1a202c;
     --text: #f7fafc;
@@ -836,8 +781,7 @@ input[type="date"] {
     .dark-mode .item-card,
     .dark-mode .add-item-form,
     .dark-mode .edit-form,
-    .dark-mode .list-view table,
-    .dark-mode .items-table table {
+    .dark-mode .list-view table {
         background: #2d3748;
     }
 
@@ -869,32 +813,7 @@ input[type="date"] {
         background: rgba(255, 255, 255, 0.1);
     }
 
-    .dark-mode .items-table:after {
-        background: linear-gradient(to left, rgba(45, 55, 72, 0.9), transparent);
-    }
-
-/* Media Queries */
-@media screen and (max-width: 1200px) {
-    .items-table table {
-        min-width: 900px;
-    }
-
-    .list-view .product-info {
-        min-width: 250px;
-    }
-}
-
-@media screen and (max-width: 1024px) {
-    .list-view {
-        padding: 12px;
-    }
-
-        .list-view td {
-            padding: 12px;
-        }
-}
-
-@media screen and (max-width: 768px) {
+@media (max-width: 768px) {
     .header-top {
         flex-direction: column;
         gap: 16px;
@@ -959,39 +878,24 @@ input[type="date"] {
         grid-template-columns: 1fr;
     }
 
-    .items-table-wrapper {
-        margin: 0 -12px;
-        padding: 0 12px;
-    }
-
-    .items-table {
-        margin: 0 -16px;
-        padding: 0 16px;
+    .list-view {
+        max-width: 100%;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        padding: 0;
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        position: relative;
     }
 
-    .list-view td,
-    .list-view th {
-        padding: 12px;
-    }
 
-    .list-view .edit-form {
-        margin: 0;
-        padding: 10px;
-    }
-
-        .list-view .edit-form .form-content {
-            padding: 10px;
+        .list-view table {
+            width: 100%;
+            min-width: 800px; /* Minimum width to ensure content doesn't get too cramped */
+            border-collapse: separate;
+            border-spacing: 0;
         }
-
-    .list-view .product-info .name,
-    .list-view .product-info .shop {
-        max-width: 200px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
 
     .modal-overlay {
         padding: 12px;
@@ -1050,7 +954,17 @@ input[type="date"] {
     }
 }
 
-/* Touch Device Optimizations */
+@media (hover: none) {
+    .btn:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .item-card:hover {
+        transform: none;
+    }
+}
+
 @supports (-webkit-touch-callout: none) {
     .modal-overlay,
     .add-item-form,
@@ -1059,16 +973,6 @@ input[type="date"] {
     .date-card {
         -webkit-overflow-scrolling: touch;
     }
-
-    .items-table {
-        overscroll-behavior-x: none;
-        -webkit-overflow-scrolling: touch;
-        overflow-x: scroll;
-    }
-
-        .items-table table {
-            -webkit-text-size-adjust: 100%;
-        }
 
     .form-input,
     input[type="date"],
@@ -1085,35 +989,8 @@ input[type="date"] {
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
     }
-
-    .list-view .btn-icon {
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-        min-height: 44px;
-    }
 }
 
-@media (hover: none) {
-    .list-view tr:active {
-        background-color: rgba(0, 0, 0, 0.05);
-    }
-
-    .list-view .btn-icon:active {
-        transform: scale(0.95);
-        opacity: 0.8;
-    }
-
-    .btn:hover {
-        transform: none;
-        box-shadow: none;
-    }
-
-    .item-card:hover {
-        transform: none;
-    }
-}
-
-/* Print Styles */
 @media print {
     .container {
         max-width: none;
@@ -1126,7 +1003,7 @@ input[type="date"] {
     .item-actions {
         display: none;
     }
-    /* Print Styles (continued) */
+
     .item-card {
         break-inside: avoid;
         box-shadow: none;
@@ -1144,42 +1021,57 @@ input[type="date"] {
     }
 }
 
-/* Edit Form in List View */
-.list-view td[colspan="5"] {
-    padding: 0;
-}
-
-.list-view .edit-form {
-    background: white;
-    border-radius: var(--radius);
-    padding: 20px;
-    margin: 10px 0;
-    box-shadow: var(--shadow);
-}
-
-    .list-view .edit-form .form-content {
-        padding: 20px;
+@media screen and (max-width: 1024px) {
+    .list-view {
+        padding: 12px;
     }
 
-.list-view tr.editing {
-    background-color: var(--background);
+        .list-view td {
+            padding: 12px;
+        }
 }
 
-/* Item Status */
-.delivery-status {
-    margin-bottom: 16px;
+@media screen and (max-width: 1200px) {
+    .items-table table {
+        min-width: 900px;
+    }
+
+    .list-view .product-info {
+        min-width: 250px;
+    }
 }
 
-/* List View Touch Optimization */
+@media screen and (max-width: 768px) {
+    .items-table-wrapper {
+        margin: 0 -12px;
+        padding: 0 12px;
+    }
+
+    .list-view td,
+    .list-view th {
+        padding: 12px;
+    }
+
+    /* Ensure text doesn't overflow on mobile */
+    .list-view .product-info .name,
+    .list-view .product-info .shop {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+/* iOS Specific Fixes */
 @supports (-webkit-touch-callout: none) {
     .list-view {
-        overscroll-behavior-x: none;
         -webkit-overflow-scrolling: touch;
-        overflow-x: scroll;
     }
 
-        .list-view table {
-            -webkit-text-size-adjust: 100%;
+        .list-view .btn-icon {
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 44px;
         }
 
         .list-view input[type="checkbox"] {
@@ -1188,7 +1080,6 @@ input[type="date"] {
         }
 }
 
-/* List View Scroll Indicator */
 .list-view:after {
     content: '';
     position: absolute;
@@ -1205,142 +1096,87 @@ input[type="date"] {
     opacity: 1;
 }
 
-/* Form Actions */
-.form-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 20px;
-}
-
-.btn-save {
-    background-color: var(--secondary);
-}
-
-.btn-cancel {
-    background-color: var(--gray);
-}
-
-/* Animation */
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes progressFill {
-    from {
-        width: 0;
-    }
-}
-
-/* Loading State */
-.loading-spinner {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 200px;
-}
-
-/* Error State */
-.error-message {
-    text-align: center;
-    padding: 20px;
-    background: #fff5f5;
-    border-radius: var(--radius);
-    color: var(--accent);
-}
-
-.retry-button {
-    margin-top: 12px;
-    padding: 8px 16px;
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-/* Unauthorized State */
-.unauthorized {
-    text-align: center;
-    padding: 40px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-}
-
-    .unauthorized .icon {
-        font-size: 48px;
-        margin-bottom: 16px;
-    }
-
-/* iOS Specific Button Fixes */
 @supports (-webkit-touch-callout: none) {
-    .list-view .btn-icon,
-    .btn,
-    .btn-close,
-    .toggle-switch {
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-        min-height: 44px;
+    .list-view {
+        /* Prevent elastic scroll effect on iOS */
+        overscroll-behavior-x: none;
+        /* Ensure smooth momentum scrolling */
+        -webkit-overflow-scrolling: touch;
+        /* Remove rubber-band effect */
+        overflow-x: scroll;
+    }
+        /* Prevent text size adjustment */
+        .list-view table {
+            -webkit-text-size-adjust: 100%;
+        }
+}
+
+/* Add visual feedback for touch interactions */
+@media (hover: none) {
+    .list-view tr:active {
+        background-color: rgba(0, 0, 0, 0.05);
     }
 }
 
-/* Dark Mode List View */
-.dark-mode .list-view:after {
+.items-table-wrapper {
+    position: relative;
+    width: calc(100% + 32px); /* Expand slightly beyond container */
+    margin: 0 -16px;
+    padding: 0 16px;
+}
+
+
+.items-table table {
+    min-width: 1000px; /* Increased from 800px */
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+
+.items-table table {
+    min-width: 800px;
+    width: 100%;
+}
+
+.items-table:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 24px;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.9), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.items-table.scrollable:after {
+    opacity: 1;
+}
+
+/* Dark mode adjustments */
+.dark-mode .items-table:after {
     background: linear-gradient(to left, rgba(45, 55, 72, 0.9), transparent);
 }
 
-.dark-mode .error-message {
-    background: rgba(231, 76, 60, 0.1);
-}
-
-.dark-mode .unauthorized {
-    background: rgba(45, 55, 72, 0.9);
-}
-
-/* Mobile List View Optimizations */
 @media screen and (max-width: 768px) {
-    .list-view {
-        margin: 0 -16px;
-        border-radius: 0;
-    }
-
     .items-table-wrapper {
-        margin: 0;
+        margin: 0 -16px;
+        padding: 0 16px;
     }
 
-    .list-view .btn-icon {
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
+    .items-table {
+        margin: 0 -16px;
+        padding: 0 16px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
     }
 
-    .list-view td[colspan="5"] .edit-form {
-        border-radius: 0;
-        margin: 0;
-    }
-}
-
-/* List View Loading State */
-.list-view-skeleton {
-    animation: pulse 1.5s infinite;
-    background: linear-gradient( 90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100% );
-    background-size: 200% 100%;
-}
-
-@keyframes pulse {
-    0% {
-        background-position: 200% 0;
-    }
-
-    100% {
-        background-position: -200% 0;
-    }
+        .items-table::-webkit-scrollbar {
+            display: none;
+        }
 }

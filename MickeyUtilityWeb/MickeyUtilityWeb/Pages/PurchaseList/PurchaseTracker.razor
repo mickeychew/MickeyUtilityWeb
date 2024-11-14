@@ -689,73 +689,233 @@
                                                     <tbody>
                                                         @foreach (var item in categoryItems)
                                                         {
-                                                            <tr class="@(item.IsItemReceived ? "received" : "pending")">
-                                                                <td>
-                                                                    <div class="product-info">
-                                                                        <span class="name">
-                                                                            <span class="icon">📦</span>
-                                                                            @item.ProductName
-                                                                        </span>
-                                                                        @if (!string.IsNullOrEmpty(item.ShopName))
-                                                                        {
-                                                                            <span class="shop">
-                                                                                <span class="icon">🏪</span>
-                                                                                @item.ShopName
+                                                            @if (editingItem?.ID == item.ID)
+                                                            {
+                                                                <tr>
+                                                                    <td colspan="5">
+                                                                        <div class="edit-form">
+                                                                            <div class="form-header">
+                                                                                <h3><span class="icon">✏️</span> Edit Item</h3>
+                                                                                <button class="btn-close" @onclick="CancelEdit">✕</button>
+                                                                            </div>
+                                                                            <div class="form-content">
+                                                                                <div class="form-section">
+                                                                                    <div class="section-header">
+                                                                                        <span class="icon">📝</span>
+                                                                                        <label>Product Details</label>
+                                                                                    </div>
+                                                                                    <div class="input-group">
+                                                                                        <div class="input-wrapper">
+                                                                                            <span class="input-icon">📦</span>
+                                                                                            <input type="text"
+                                                                                                   placeholder="Product Name"
+                                                                                                   @bind="editingItem.ProductName"
+                                                                                                   class="form-input" />
+                                                                                        </div>
+                                                                                        <div class="input-wrapper">
+                                                                                            <span class="input-icon">🏷️</span>
+                                                                                            <select @bind="editingItem.Category" class="form-input">
+                                                                                                <option value="">Select Category</option>
+                                                                                                @foreach (var icon in EmojiIconService.GetIcons())
+                                                                                                {
+                                                                                                    <option value="@icon.Key">@icon.Value.Emoji @icon.Value.DisplayName</option>
+                                                                                                }
+                                                                                            </select>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                <div class="form-section">
+                                                                                    <div class="section-header">
+                                                                                        <span class="icon">💰</span>
+                                                                                        <label>Price Details</label>
+                                                                                    </div>
+                                                                                    <div class="input-group">
+                                                                                        <div class="input-wrapper">
+                                                                                            <span class="input-icon">💵</span>
+                                                                                            <input type="number"
+                                                                                                   placeholder="Original Price"
+                                                                                                   @bind="editingItem.OriginalPrice"
+                                                                                                   class="form-input" />
+                                                                                        </div>
+                                                                                        <div class="input-wrapper">
+                                                                                            <span class="input-icon">💳</span>
+                                                                                            <select value="@paymentType"
+                                                                                                    @onchange="@(e => {
+                                                                paymentType = e.Value?.ToString();
+                                                                HandlePaymentTypeChange(e, editingItem);
+                                                            })"
+                                                                                                    class="form-input">
+                                                                                                <option value="">Payment Status</option>
+                                                                                                <option value="free">Free Item</option>
+                                                                                                <option value="full">Full Payment</option>
+                                                                                                <option value="partial">Partial Payment</option>
+                                                                                            </select>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                <div class="form-section">
+                                                                                    <div class="section-header">
+                                                                                        <span class="icon">🏪</span>
+                                                                                        <label>Shop Details</label>
+                                                                                    </div>
+                                                                                    <div class="input-group">
+                                                                                        <div class="input-wrapper">
+                                                                                            <span class="input-icon">🏢</span>
+                                                                                            <input type="text"
+                                                                                                   placeholder="Shop Name"
+                                                                                                   @bind="editingItem.ShopName"
+                                                                                                   class="form-input" />
+                                                                                        </div>
+                                                                                        <div class="input-wrapper">
+                                                                                            <span class="input-icon">👤</span>
+                                                                                            <input type="text"
+                                                                                                   placeholder="Contact Person"
+                                                                                                   @bind="editingItem.ContactPerson"
+                                                                                                   class="form-input" />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                <div class="form-section">
+                                                                                    <div class="section-header">
+                                                                                        <span class="icon">📦</span>
+                                                                                        <label>Delivery Status</label>
+                                                                                    </div>
+                                                                                    <div class="delivery-toggle">
+                                                                                        <label class="toggle-switch">
+                                                                                            <input type="checkbox" @bind="editingItem.IsItemReceived" />
+                                                                                            <span class="slider"></span>
+                                                                                            <span class="toggle-label">
+                                                                                                <span class="icon">@(editingItem.IsItemReceived ? "✅" : "⏳")</span>
+                                                                                                @(editingItem.IsItemReceived ? "Item Received" : "Item Pending")
+                                                                                            </span>
+                                                                                        </label>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                <div class="form-section">
+                                                                                    <div class="section-header">
+                                                                                        <span class="icon">📅</span>
+                                                                                        <label>Important Dates</label>
+                                                                                    </div>
+                                                                                    <div class="dates-container">
+                                                                                        <div class="date-card">
+                                                                                            <div class="date-card-header">
+                                                                                                <span class="date-icon">💳</span>
+                                                                                                <label>Purchase Date</label>
+                                                                                            </div>
+                                                                                            <input type="date"
+                                                                                                   @bind="editingItem.DepositPaymentDate"
+                                                                                                   class="form-input" />
+                                                                                        </div>
+
+                                                                                        <div class="date-card">
+                                                                                            <div class="date-card-header">
+                                                                                                <span class="date-icon">🛡️</span>
+                                                                                                <label>Warranty Date</label>
+                                                                                            </div>
+                                                                                            <input type="date"
+                                                                                                   @bind="editingItem.WarrantyDate"
+                                                                                                   class="form-input" />
+                                                                                        </div>
+
+                                                                                        <div class="date-card">
+                                                                                            <div class="date-card-header">
+                                                                                                <span class="date-icon">🚚</span>
+                                                                                                <label>Expected Delivery</label>
+                                                                                            </div>
+                                                                                            <input type="date"
+                                                                                                   @bind="editingItem.ExpectedDeliveryDate"
+                                                                                                   class="form-input" />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                <div class="form-actions">
+                                                                                    <button class="btn btn-save" @onclick="SaveEdit">
+                                                                                        <span class="icon">💾</span> Save
+                                                                                    </button>
+                                                                                    <button class="btn btn-cancel" @onclick="CancelEdit">
+                                                                                        <span class="icon">✖️</span> Cancel
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                            else
+                                                            {
+                                                                <tr class="@(item.IsItemReceived ? "received" : "pending")">
+                                                                    <td>
+                                                                        <div class="product-info">
+                                                                            <span class="name">
+                                                                                <span class="icon">📦</span>
+                                                                                @item.ProductName
                                                                             </span>
-                                                                        }
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div class="price-info">
-                                                                        @if (item.HasDiscount)
-                                                                        {
-                                                                            <span class="original-price">
-                                                                                <span class="icon">💰</span>
-                                                                                @FormatCurrency(item.OriginalPrice)
+                                                                            @if (!string.IsNullOrEmpty(item.ShopName))
+                                                                            {
+                                                                                <span class="shop">
+                                                                                    <span class="icon">🏪</span>
+                                                                                    @item.ShopName
+                                                                                </span>
+                                                                            }
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="price-info">
+                                                                            @if (item.HasDiscount)
+                                                                            {
+                                                                                <span class="original-price">
+                                                                                    <span class="icon">💰</span>
+                                                                                    @FormatCurrency(item.OriginalPrice)
+                                                                                </span>
+                                                                                <span class="discount">
+                                                                                    <span class="icon">🏷️</span>
+                                                                                    @(item.DiscountPercentage.HasValue
+                                                                                        ? $"-{item.DiscountPercentage:F1}%"
+                                                                                        : $"-{FormatCurrency(item.DiscountAmount)}")
+                                                                                </span>
+                                                                            }
+                                                                            <span class="final-price">
+                                                                                <span class="icon">💵</span>
+                                                                                @FormatCurrency(item.ItemPrice)
                                                                             </span>
-                                                                            <span class="discount">
-                                                                                <span class="icon">🏷️</span>
-                                                                                @(item.DiscountPercentage.HasValue
-                                                                                    ? $"-{item.DiscountPercentage:F1}%"
-                                                                                    : $"-{FormatCurrency(item.DiscountAmount)}")
-                                                                            </span>
-                                                                        }
-                                                                        <span class="final-price">
-                                                                            <span class="icon">💵</span>
-                                                                            @FormatCurrency(item.ItemPrice)
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div class="payment-status @GetPaymentStatusClass(item)">
-                                                                        <span class="icon">💳</span>
-                                                                        @item.PaymentProgress
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div class="delivery-toggle">
-                                                                        <label class="toggle-switch">
-                                                                            <input type="checkbox"
-                                                                                   checked="@item.IsItemReceived"
-                                                                                   @onchange="@(e => ToggleReceived(item))" />
-                                                                            <span class="slider"></span>
-                                                                            <span class="status-icon">
-                                                                                @(item.IsItemReceived ? "✅" : "⏳")
-                                                                            </span>
-                                                                        </label>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div class="item-actions">
-                                                                        <button class="btn btn-icon" @onclick="() => StartEdit(item)">
-                                                                            <span class="icon">✏️</span>
-                                                                        </button>
-                                                                        <button class="btn btn-icon" @onclick="() => RemoveItem(item)">
-                                                                            <span class="icon">🗑️</span>
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="payment-status @GetPaymentStatusClass(item)">
+                                                                            <span class="icon">💳</span>
+                                                                            @item.PaymentProgress
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="delivery-toggle">
+                                                                            <label class="toggle-switch">
+                                                                                <input type="checkbox"
+                                                                                       checked="@item.IsItemReceived"
+                                                                                       @onchange="@(e => ToggleReceived(item))" />
+                                                                                <span class="slider"></span>
+                                                                                <span class="status-icon">
+                                                                                    @(item.IsItemReceived ? "✅" : "⏳")
+                                                                                </span>
+                                                                            </label>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="item-actions">
+                                                                            <button class="btn btn-icon" @onclick="() => StartEdit(item)">
+                                                                                <span class="icon">✏️</span>
+                                                                            </button>
+                                                                            <button class="btn btn-icon" @onclick="() => RemoveItem(item)">
+                                                                                <span class="icon">🗑️</span>
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            }
                                                         }
                                                     </tbody>
                                                 </table>

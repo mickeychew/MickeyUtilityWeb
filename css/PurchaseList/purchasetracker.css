@@ -459,16 +459,17 @@ input:checked + .slider {
 
 .list-view td,
 .list-view th {
-    padding: 12px;
-    white-space: normal; /* Allow text wrapping for better mobile display */
+    padding: 16px;
     vertical-align: middle;
 }
 .list-view tr:last-child td {
     border-bottom: none;
 }
 .list-view .product-info {
-    min-width: 200px; /* Ensure product info has enough space */
+    min-width: 300px; /* More space for product name and shop */
+    padding-right: 16px;
 }
+
 
 .list-view .name {
     font-weight: 600;
@@ -487,8 +488,10 @@ input:checked + .slider {
 }
 
 .list-view .price-info {
-    min-width: 120px;
+    min-width: 180px; /* More space for prices and discounts */
+    white-space: nowrap;
 }
+
 
 .list-view .original-price {
     text-decoration: line-through;
@@ -502,7 +505,7 @@ input:checked + .slider {
 }
 
 .list-view .payment-info {
-    min-width: 100px;
+    min-width: 140px;
 }
 
 .list-view .status-progress {
@@ -522,6 +525,9 @@ input:checked + .slider {
 }
 
 .list-view .delivery-status {
+    min-width: 120px;
+}
+.list-view .item-actions {
     min-width: 100px;
 }
 
@@ -1017,26 +1023,34 @@ input[type="date"] {
             padding: 12px;
         }
 }
-@media screen and (max-width: 768px) {
-    .list-view {
-        margin: 0 -16px;
-        border-radius: 0;
+@media screen and (max-width: 1200px) {
+    .items-table table {
+        min-width: 900px;
     }
 
-        .list-view table {
-            min-width: 800px;
-        }
+    .list-view .product-info {
+        min-width: 250px;
+    }
+}
+@media screen and (max-width: 768px) {
+    .items-table-wrapper {
+        margin: 0 -12px;
+        padding: 0 12px;
+    }
 
-        .list-view th,
-        .list-view td {
-            padding: 12px 8px;
-        }
+    .list-view td,
+    .list-view th {
+        padding: 12px;
+    }
 
-        .list-view .btn-icon {
-            width: 44px;
-            height: 44px;
-            min-width: 44px;
-        }
+    /* Ensure text doesn't overflow on mobile */
+    .list-view .product-info .name,
+    .list-view .product-info .shop {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 }
 
 /* iOS Specific Fixes */
@@ -1095,21 +1109,45 @@ input[type="date"] {
 }
 .items-table-wrapper {
     position: relative;
-    width: 100%;
-    overflow: hidden;
+    width: calc(100% + 32px); /* Expand slightly beyond container */
+    margin: 0 -16px;
+    padding: 0 16px;
 }
 
-.items-table {
+
+.items-table table {
+    min-width: 1000px; /* Increased from 800px */
     width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    border-collapse: separate;
+    border-spacing: 0;
 }
+
 
     .items-table table {
         min-width: 800px;
         width: 100%;
     }
+.items-table:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 24px;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.9), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
 
+.items-table.scrollable:after {
+    opacity: 1;
+}
+
+/* Dark mode adjustments */
+.dark-mode .items-table:after {
+    background: linear-gradient(to left, rgba(45, 55, 72, 0.9), transparent);
+}
 @media screen and (max-width: 768px) {
     .items-table-wrapper {
         margin: 0 -16px;

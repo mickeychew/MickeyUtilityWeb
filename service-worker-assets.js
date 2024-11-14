@@ -33,7 +33,7 @@
       "url": "css\/PurchaseList\/PurchaseList.css"
     },
     {
-      "hash": "sha256-s4AwEYY57Lg7pdEQOrf+w2NuyiOJxVfx2ZFcytJLFMI=",
+      "hash": "sha256-AsaUtMMCnhaWpkYza691GrKFtUpJSIWns2UHZP8V2Eg=",
       "url": "css\/PurchaseList\/purchasetracker.css"
     },
     {
@@ -125,7 +125,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-BlbdPsdTVudvi73HIBd\/wUXsrmObe7B\/FQacLrdjxHw=",
+      "hash": "sha256-gMSh6NgoO2B2LoceCCdr9k6gtRGQ1Sf1eVdGLNyCj14=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -141,7 +141,7 @@
       "url": "_framework\/EPPlus.wasm"
     },
     {
-      "hash": "sha256-OtoYAV3pTEaFkg6vvq+UNl\/JdZk5x7i7k56dM2qzD18=",
+      "hash": "sha256-8+5qTMbeg34i\/97nzF5omUAka4ok5WNnvBM0F3pn2gw=",
       "url": "_framework\/MickeyUtilityWeb.wasm"
     },
     {
@@ -441,5 +441,5 @@
       "url": "_content\/Microsoft.Authentication.WebAssembly.Msal\/AuthenticationService.js"
     }
   ],
-  "version": "\/3nKgt9R"
+  "version": "SeiGyRmV"
 };

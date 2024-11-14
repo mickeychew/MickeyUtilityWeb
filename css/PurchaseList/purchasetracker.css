@@ -457,18 +457,17 @@ input:checked + .slider {
     white-space: nowrap;
 }
 
-.list-view td {
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
+.list-view td,
+.list-view th {
+    padding: 12px;
+    white-space: normal; /* Allow text wrapping for better mobile display */
     vertical-align: middle;
 }
 .list-view tr:last-child td {
     border-bottom: none;
 }
 .list-view .product-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    min-width: 200px; /* Ensure product info has enough space */
 }
 
 .list-view .name {
@@ -488,9 +487,7 @@ input:checked + .slider {
 }
 
 .list-view .price-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    min-width: 120px;
 }
 
 .list-view .original-price {
@@ -505,9 +502,7 @@ input:checked + .slider {
 }
 
 .list-view .payment-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    min-width: 100px;
 }
 
 .list-view .status-progress {
@@ -527,10 +522,9 @@ input:checked + .slider {
 }
 
 .list-view .delivery-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    min-width: 100px;
 }
+
 
 .list-view .status-badge {
     padding: 4px 8px;
@@ -873,17 +867,20 @@ input[type="date"] {
     }
 
     .list-view {
-        width: 100%;
+        max-width: 100%;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        padding: 16px;
+        padding: 0;
         background: white;
         border-radius: var(--radius);
         box-shadow: var(--shadow);
+        position: relative;
     }
+
 
         .list-view table {
             width: 100%;
+            min-width: 800px; /* Minimum width to ensure content doesn't get too cramped */
             border-collapse: separate;
             border-spacing: 0;
         }
@@ -1060,20 +1057,39 @@ input[type="date"] {
         }
 }
 
-/* Table Scroll Shadow */
-.list-view::after {
+.list-view:after {
     content: '';
     position: absolute;
-    right: 0;
     top: 0;
+    right: 0;
     bottom: 0;
-    width: 30px;
-    pointer-events: none;
+    width: 20px;
     background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
-    opacity: 0;
-    transition: opacity 0.2s;
+    pointer-events: none;
+    opacity: 0.8;
 }
 
 .list-view:hover::after {
     opacity: 1;
+}
+@supports (-webkit-touch-callout: none) {
+    .list-view {
+        /* Prevent elastic scroll effect on iOS */
+        overscroll-behavior-x: none;
+        /* Ensure smooth momentum scrolling */
+        -webkit-overflow-scrolling: touch;
+        /* Remove rubber-band effect */
+        overflow-x: scroll;
+    }
+        /* Prevent text size adjustment */
+        .list-view table {
+            -webkit-text-size-adjust: 100%;
+        }
+}
+
+/* Add visual feedback for touch interactions */
+@media (hover: none) {
+    .list-view tr:active {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
 }
